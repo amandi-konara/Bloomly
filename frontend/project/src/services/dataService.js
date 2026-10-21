@@ -1,0 +1,383 @@
+import api from '../api';
+
+const STORAGE_KEYS = {
+  LOGS: 'bloomly_logs',
+  HABITS: 'bloomly_habits',
+  GOALS: 'bloomly_goals',
+  SETTINGS: 'bloomly_settings',
+};
+
+// Seed sample past 7 days of logs if none exist so the charts & habits look alive immediately
+const INITIAL_LOGS = [
+  {
+    _id: 'seed-6',
+    date: new Date(Date.now() - 6 * 86400000).toISOString(),
+    mood: 'blooming',
+    energyLevel: 4,
+    studyHours: 4.5,
+    littleWin: 'Finished my lecture notes early & enjoyed matcha tea in the garden 🍵',
+    selfCare: { meal: true, stretch: true, screenBreak: true, friend: false },
+    notes: 'Feeling light and focused today. Really loved the morning sunshine.',
+  },
+  {
+    _id: 'seed-5',
+    date: new Date(Date.now() - 5 * 86400000).toISOString(),
+    mood: 'sunny',
+    energyLevel: 5,
+    studyHours: 5,
+    littleWin: 'Walked through campus park with Maya between labs 🌿',
+    selfCare: { meal: true, stretch: true, screenBreak: true, friend: true },
+    notes: 'Great energy! Hit my study goal without feeling exhausted.',
+  },
+  {
+    _id: 'seed-4',
+    date: new Date(Date.now() - 4 * 86400000).toISOString(),
+    mood: 'seedling',
+    energyLevel: 3,
+    studyHours: 3.5,
+    littleWin: 'Watered all my windowsill plants and took a quiet pause 🪴',
+    selfCare: { meal: true, stretch: false, screenBreak: true, friend: false },
+    notes: 'A bit sleepy in the afternoon, gave myself permission to take a 20-min power nap.',
+  },
+  {
+    _id: 'seed-3',
+    date: new Date(Date.now() - 3 * 86400000).toISOString(),
+    mood: 'wilting',
+    energyLevel: 2,
+    studyHours: 2.0,
+    littleWin: 'Baked cinnamon oats and rested when my body asked for it 🥣',
+    selfCare: { meal: true, stretch: true, screenBreak: false, friend: true },
+    notes: 'Exams approaching, felt a little overwhelmed but stretching really helped.',
+  },
+  {
+    _id: 'seed-2',
+    date: new Date(Date.now() - 2 * 86400000).toISOString(),
+    mood: 'seedling',
+    energyLevel: 3,
+    studyHours: 4.0,
+    littleWin: 'Solved a tough algorithm question on first try! ✨',
+    selfCare: { meal: true, stretch: true, screenBreak: true, friend: false },
+    notes: 'Regained confidence today. Momentum is building slowly and gently.',
+  },
+  {
+    _id: 'seed-1',
+    date: new Date(Date.now() - 1 * 86400000).toISOString(),
+    mood: 'blooming',
+    energyLevel: 4,
+    studyHours: 4.5,
+    littleWin: 'Cooked dinner with my roommate and laughed till our cheeks hurt 🍲',
+    selfCare: { meal: true, stretch: true, screenBreak: true, friend: true },
+    notes: 'Connection is such medicine. Feeling deeply grateful tonight.',
+  },
+];
+
+const INITIAL_HABITS = [
+  {
+    id: 'h-1',
+    title: 'Hydrate with lemon water',
+    category: 'Hydration',
+    target: '2.0 Liters',
+    streak: 6,
+    icon: 'droplet',
+    color: 'mint',
+    completedToday: true,
+    history: [true, true, true, true, false, true, true],
+  },
+  {
+    id: 'h-2',
+    title: 'Morning gentle stretch',
+    category: 'Movement',
+    target: '15 mins',
+    streak: 4,
+    icon: 'activity',
+    color: 'sage',
+    completedToday: true,
+    history: [false, true, true, true, true, true, true],
+  },
+  {
+    id: 'h-3',
+    title: 'Mindful study session',
+    category: 'Focus',
+    target: '3+ Hours',
+    streak: 5,
+    icon: 'book',
+    color: 'butter',
+    completedToday: false,
+    history: [true, true, true, true, true, false, false],
+  },
+  {
+    id: 'h-4',
+    title: 'Screen curfew by 10:30 PM',
+    category: 'Rest',
+    target: 'Every night',
+    streak: 3,
+    icon: 'moon',
+    color: 'peach',
+    completedToday: false,
+    history: [true, false, true, false, true, true, false],
+  },
+  {
+    id: 'h-5',
+    title: 'Nourishing home-cooked meal',
+    category: 'Nutrition',
+    target: 'Daily',
+    streak: 7,
+    icon: 'sparkles',
+    color: 'sage',
+    completedToday: true,
+    history: [true, true, true, true, true, true, true],
+  },
+];
+
+const INITIAL_GOALS = [
+  {
+    id: 'g-1',
+    title: '7-Day Mindful Garden Streak',
+    description: 'Log daily mood, self-care, and little wins for 7 consecutive days',
+    category: 'Wellness Habit',
+    current: 6,
+    target: 7,
+    unit: 'days',
+    progress: 85,
+    deadline: 'This Sunday',
+    reward: 'Unlock "Blooming Lotus" clay badge',
+    status: 'in-progress',
+  },
+  {
+    id: 'g-2',
+    title: 'Consistent 25 Study Hours',
+    description: 'Balance focused study hours with restorative breaks',
+    category: 'Academics',
+    current: 21,
+    target: 25,
+    unit: 'hours',
+    progress: 84,
+    deadline: 'End of week',
+    reward: 'Cozy study companion sticker',
+    status: 'in-progress',
+  },
+  {
+    id: 'g-3',
+    title: 'Mindful Outdoor Walks',
+    description: 'Take 5 walks in the fresh air without looking at mobile phone',
+    category: 'Rest & Nature',
+    current: 5,
+    target: 5,
+    unit: 'walks',
+    progress: 100,
+    deadline: 'Completed!',
+    reward: 'Golden Sun clay trophy',
+    status: 'completed',
+  },
+  {
+    id: 'g-4',
+    title: 'Sleep Routine Restoration',
+    description: 'Reach 8 hours restful sleep for at least 5 nights this week',
+    category: 'Recovery',
+    current: 3,
+    target: 5,
+    unit: 'nights',
+    progress: 60,
+    deadline: 'Next Monday',
+    reward: 'Starlight Dreamer badge',
+    status: 'in-progress',
+  },
+];
+
+const INITIAL_SETTINGS = {
+  name: 'Amandi',
+  email: 'amandi@university.edu',
+  university: 'Faculty of Engineering',
+  dailyReminder: '20:30',
+  notifications: true,
+  cozySounds: true,
+  weeklyReport: true,
+  accentTheme: 'sage',
+};
+
+export const dataService = {
+  // --- Logs ---
+  async getLogs() {
+    try {
+      const res = await api.get('/logs');
+      if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+        localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(res.data));
+        return res.data;
+      }
+    } catch (err) {
+      console.warn('API getLogs fallback to local cache:', err.message);
+    }
+    const cached = localStorage.getItem(STORAGE_KEYS.LOGS);
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (e) {
+        // fallback
+      }
+    }
+    localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(INITIAL_LOGS));
+    return INITIAL_LOGS;
+  },
+
+  async addLog(logData) {
+    let savedLog = null;
+    try {
+      const res = await api.post('/logs', logData);
+      if (res.data) savedLog = res.data;
+    } catch (err) {
+      console.warn('API addLog fallback to local storage:', err.message);
+    }
+    if (!savedLog) {
+      savedLog = {
+        _id: 'local-' + Date.now(),
+        date: new Date().toISOString(),
+        ...logData,
+      };
+    }
+    const current = await this.getLogs();
+    const updated = [savedLog, ...current.filter((l) => {
+      const lDate = new Date(l.date).toDateString();
+      const sDate = new Date(savedLog.date).toDateString();
+      return lDate !== sDate;
+    })];
+    localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(updated));
+    return savedLog;
+  },
+
+  // --- Habits ---
+  getHabits() {
+    const raw = localStorage.getItem(STORAGE_KEYS.HABITS);
+    if (raw) {
+      try {
+        return JSON.parse(raw);
+      } catch (e) {
+        // ignore
+      }
+    }
+    localStorage.setItem(STORAGE_KEYS.HABITS, JSON.stringify(INITIAL_HABITS));
+    return INITIAL_HABITS;
+  },
+
+  saveHabits(habits) {
+    localStorage.setItem(STORAGE_KEYS.HABITS, JSON.stringify(habits));
+  },
+
+  toggleHabit(id) {
+    const habits = this.getHabits();
+    const updated = habits.map((h) => {
+      if (h.id === id) {
+        const nextState = !h.completedToday;
+        return {
+          ...h,
+          completedToday: nextState,
+          streak: nextState ? h.streak + 1 : Math.max(0, h.streak - 1),
+        };
+      }
+      return h;
+    });
+    this.saveHabits(updated);
+    return updated;
+  },
+
+  addHabit(habit) {
+    const habits = this.getHabits();
+    const newHabit = {
+      id: 'h-' + Date.now(),
+      streak: 0,
+      completedToday: false,
+      history: [false, false, false, false, false, false, false],
+      color: 'sage',
+      ...habit,
+    };
+    const updated = [newHabit, ...habits];
+    this.saveHabits(updated);
+    return updated;
+  },
+
+  deleteHabit(id) {
+    const habits = this.getHabits().filter((h) => h.id !== id);
+    this.saveHabits(habits);
+    return habits;
+  },
+
+  // --- Goals ---
+  getGoals() {
+    const raw = localStorage.getItem(STORAGE_KEYS.GOALS);
+    if (raw) {
+      try {
+        return JSON.parse(raw);
+      } catch (e) {
+        // ignore
+      }
+    }
+    localStorage.setItem(STORAGE_KEYS.GOALS, JSON.stringify(INITIAL_GOALS));
+    return INITIAL_GOALS;
+  },
+
+  saveGoals(goals) {
+    localStorage.setItem(STORAGE_KEYS.GOALS, JSON.stringify(goals));
+  },
+
+  addGoal(goal) {
+    const goals = this.getGoals();
+    const newGoal = {
+      id: 'g-' + Date.now(),
+      current: 0,
+      progress: 0,
+      status: 'in-progress',
+      ...goal,
+    };
+    const updated = [newGoal, ...goals];
+    this.saveGoals(updated);
+    return updated;
+  },
+
+  updateGoalProgress(id, increment) {
+    const goals = this.getGoals();
+    const updated = goals.map((g) => {
+      if (g.id === id) {
+        const nextVal = Math.min(g.target, Math.max(0, g.current + increment));
+        const progress = Math.round((nextVal / g.target) * 100);
+        return {
+          ...g,
+          current: nextVal,
+          progress,
+          status: progress >= 100 ? 'completed' : 'in-progress',
+        };
+      }
+      return g;
+    });
+    this.saveGoals(updated);
+    return updated;
+  },
+
+  // --- Settings ---
+  getSettings() {
+    const raw = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+    if (raw) {
+      try {
+        return { ...INITIAL_SETTINGS, ...JSON.parse(raw) };
+      } catch (e) {
+        // ignore
+      }
+    }
+    return INITIAL_SETTINGS;
+  },
+
+  saveSettings(settings) {
+    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+  },
+
+  // --- AI Tips with Warm Fallbacks ---
+  async getAiTips() {
+    try {
+      const res = await api.get('/ai/tips');
+      if (res.data?.tips) return res.data.tips;
+    } catch (err) {
+      console.warn('API getAiTips fallback:', err.message);
+    }
+    return `🌸 Your garden is thriving! You've stayed consistent with your daily stretches and hydration even during busy study weeks.
+🌱 Notice how your energy peaks on days when you connect with friends — keep protecting those small social pauses.
+✨ Give yourself permission to rest this evening; gentle consistency will always outgrow burnout.`;
+  },
+};
