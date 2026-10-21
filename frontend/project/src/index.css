@@ -1,3 +1,61 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #FFF9F0;
+    color: #263D34;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, .font-display {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+  }
+}
+
+/* Custom scrollbars with warm aesthetic */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FFF9F0;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D1E0CD;
+  border-radius: 9999px;
+  border: 2px solid #FFF9F0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #A8BE9B;
+}
+
+/* Tactile clay press effect */
+.clay-btn {
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.clay-btn:hover {
+  transform: translateY(-1px);
+}
+
+.clay-btn:active {
+  transform: translateY(1px);
+}
+
+/* Smooth motion respecting reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
