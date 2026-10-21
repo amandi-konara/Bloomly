@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Target, Trophy, Sparkles, Plus, Check, Flame } from '../components/Icons';
+import { Trophy as LucideTrophy } from 'lucide-react';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
@@ -59,7 +60,7 @@ export default function Goals() {
               Milestones & Growth
             </Badge>
             <h1 className="text-2xl md:text-3xl font-extrabold font-display text-bloom-dark">
-              Goals & Gentle Milestones 🎯
+              Goals & Gentle Milestones
             </h1>
             <p className="text-sm text-bloom-muted leading-relaxed">
               Celebrate your progress without harsh pressure. Every small step is a seed planted toward long-term balance.
@@ -152,7 +153,7 @@ export default function Goals() {
 
                 {goal.reward && (
                   <div className="flex items-center gap-2 p-2 rounded-xl bg-cream-50 border border-bloom-border text-[11px] text-bloom-dark">
-                    <span>🏆</span>
+                    <LucideTrophy className="w-4 h-4 text-amber-500" />
                     <span className="font-medium">Reward: {goal.reward}</span>
                   </div>
                 )}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, Check, ChevronLeft } from '../components/Icons';
+import { Sparkles, Check, ChevronLeft, Sprout, Utensils, PersonStanding, MonitorOff, MessageCircle, Droplets, TreePine, Flower } from 'lucide-react';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
@@ -17,12 +17,12 @@ const ENERGY_LABELS = {
 };
 
 const CARE_ITEMS = [
-  { key: 'meal', label: 'Nourishing Meal', icon: '🍲' },
-  { key: 'stretch', label: 'Gentle Stretch', icon: '🧘' },
-  { key: 'screenBreak', label: 'Screen Curfew', icon: '📵' },
-  { key: 'friend', label: 'Connected with Friend', icon: '💬' },
-  { key: 'water', label: 'Hydrated Well', icon: '💧' },
-  { key: 'nature', label: 'Fresh Air / Walk', icon: '🌿' },
+  { key: 'meal', label: 'Nourishing Meal', icon: Utensils },
+  { key: 'stretch', label: 'Gentle Stretch', icon: PersonStanding },
+  { key: 'screenBreak', label: 'Screen Curfew', icon: MonitorOff },
+  { key: 'friend', label: 'Connected with Friend', icon: MessageCircle },
+  { key: 'water', label: 'Hydrated Well', icon: Droplets },
+  { key: 'nature', label: 'Fresh Air / Walk', icon: TreePine },
 ];
 
 export default function LogForm() {
@@ -52,7 +52,7 @@ export default function LogForm() {
       mood,
       energyLevel,
       studyHours: Number(studyHours),
-      littleWin: littleWin.trim() || 'Took mindful care of myself today 🌸',
+      littleWin: littleWin.trim() || 'Took mindful care of myself today',
       selfCare,
       notes: notes.trim(),
     });
@@ -81,8 +81,8 @@ export default function LogForm() {
       <Card padding="p-6 md:p-8" className="border-sage-200">
         <div className="flex items-center justify-between pb-6 mb-6 border-b border-bloom-border">
           <div className="flex items-center gap-3">
-            <span className="w-12 h-12 rounded-2xl bg-mint-100 border border-mint-200 flex items-center justify-center text-2xl shadow-soft">
-              🌱
+            <span className="w-12 h-12 rounded-2xl bg-mint-100 border border-mint-200 flex items-center justify-center shadow-soft">
+              <Sprout className="w-6 h-6 text-sage-700" />
             </span>
             <div>
               <h1 className="text-xl md:text-2xl font-bold font-display text-bloom-dark">
@@ -118,7 +118,7 @@ export default function LogForm() {
                         : 'bg-white border-bloom-border hover:bg-cream-100'
                     }`}
                   >
-                    <span className="text-2xl mb-1">{config.emoji}</span>
+                    <span className="mb-1">{React.createElement(config.icon, { className: 'w-6 h-6' })}</span>
                     <span className="text-[11px] font-semibold text-bloom-dark capitalize">{key}</span>
                   </button>
                 );
@@ -184,7 +184,7 @@ export default function LogForm() {
                         : 'bg-white border-bloom-border text-bloom-muted hover:bg-cream-100'
                     }`}
                   >
-                    <span className="text-lg">{item.icon}</span>
+                    <item.icon className="w-5 h-5" />
                     <span className="text-xs font-medium">{item.label}</span>
                   </button>
                 );
@@ -195,7 +195,7 @@ export default function LogForm() {
           {/* Little Bloom */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-bloom-muted mb-2">
-              5. Today's Little Bloom 🌼 (One tiny win or grateful smile)
+              5. Today's Little Bloom <Flower className="inline w-4 h-4 text-amber-400" /> (One tiny win or grateful smile)
             </label>
             <input
               type="text"
@@ -215,7 +215,7 @@ export default function LogForm() {
               className="w-full py-4 text-base"
               icon={saved ? Check : Sparkles}
             >
-              {saved ? 'Saved to Your Garden! 🌸' : "Save Today's Log"}
+              {saved ? 'Saved to Your Garden!' : "Save Today's Log"}
             </Button>
           </div>
         </form>

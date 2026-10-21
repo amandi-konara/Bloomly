@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Flower2, Leaf } from 'lucide-react';
 import {
   ResponsiveContainer,
   BarChart,
@@ -14,6 +15,7 @@ import { BarChart3, Sparkles, RefreshCw, Flame, Heart, Activity } from '../compo
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
+import TipList from '../components/TipList';
 import { dataService } from '../services/dataService';
 import { MOOD_CONFIG } from '../components/MoodBadge';
 
@@ -42,7 +44,7 @@ export default function Insights() {
     ];
   });
   const [tips, setTips] = useState(
-    "🌸 Your garden is thriving! You've stayed consistent with your daily stretches and hydration even during busy study weeks.\n🌱 Notice how your energy peaks on days when you connect with friends — keep protecting those small pauses.\n✨ Give yourself permission to rest this evening; gentle consistency will always outgrow burnout."
+    "Your garden is thriving! You've stayed consistent with your daily stretches and hydration even during busy study weeks.\nNotice how your energy peaks on days when you connect with friends — keep protecting those small pauses.\nGive yourself permission to rest this evening; gentle consistency will always outgrow burnout."
   );
   const [loadingTips, setLoadingTips] = useState(false);
 
@@ -73,7 +75,6 @@ export default function Insights() {
     name: m.charAt(0).toUpperCase() + m.slice(1),
     mood: m,
     count: moodCounts[m] || 0,
-    emoji: MOOD_CONFIG[m].emoji,
   }));
 
   // 2. Trend data (reversed chronological)
@@ -116,7 +117,7 @@ export default function Insights() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-extrabold font-display text-bloom-dark">
-            Insights & Wellness Trends 🌿
+            Insights & Wellness Trends <Leaf className="inline-block w-5 h-5 ml-1" aria-hidden="true" />
           </h1>
           <p className="text-sm text-bloom-muted">
             Holistic data reflecting your study balance, mood patterns, and recovery
@@ -136,15 +137,15 @@ export default function Insights() {
       {/* AI Supportive Guidance Card */}
       <Card padding="p-6" className="bg-gradient-to-br from-cream-100 via-mint-50 to-sage-50 border-sage-200">
         <div className="flex items-center gap-2 mb-3">
-          <span className="w-8 h-8 rounded-xl bg-sage-200 flex items-center justify-center text-base">
-            🌸
+          <span className="w-8 h-8 rounded-xl bg-sage-200 flex items-center justify-center text-sage-700">
+            <Flower2 className="w-5 h-5" aria-hidden="true" />
           </span>
           <h2 className="text-lg font-bold font-display text-bloom-dark">
             Personalized Companion Insights
           </h2>
         </div>
-        <div className="p-4 rounded-2xl bg-white/80 border border-bloom-border text-sm text-bloom-dark leading-relaxed whitespace-pre-line space-y-2">
-          {tips || 'Generating gentle reflections from your habits and sleep patterns...'}
+        <div className="p-4 rounded-2xl bg-white/80 border border-bloom-border text-sm text-bloom-dark leading-relaxed">
+          {tips ? <TipList tips={tips} /> : 'Generating gentle reflections from your habits and sleep patterns...'}
         </div>
       </Card>
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Check, Flame, Sparkles, Trash2, Droplet, Sun, Moon, Activity, Book } from '../components/Icons';
+import { Sprout } from 'lucide-react';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
@@ -42,7 +43,7 @@ export default function Habits() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-extrabold font-display text-bloom-dark">
-            My Daily Habits 🌱
+            My Daily Habits
           </h1>
           <p className="text-sm text-bloom-muted">
             Gentle routines that keep your mind clear and your body nourished
@@ -170,7 +171,7 @@ export default function Habits() {
 
       {filtered.length === 0 && (
         <Card className="text-center py-12">
-          <p className="text-3xl mb-2">🌱</p>
+          <Sprout className="w-8 h-8 mx-auto mb-2 text-sage-600" aria-hidden="true" />
           <h3 className="text-base font-bold text-bloom-dark">No habits in this category yet</h3>
           <p className="text-xs text-bloom-muted mb-4">Plant your first habit to begin nurturing your routine</p>
           <Button variant="primary" size="sm" onClick={() => setIsAddOpen(true)}>

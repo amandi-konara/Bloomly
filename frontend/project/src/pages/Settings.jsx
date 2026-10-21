@@ -43,7 +43,7 @@ export default function Settings() {
       {/* Header */}
       <div>
         <h1 className="text-2xl md:text-3xl font-extrabold font-display text-bloom-dark">
-          Settings & Preferences ⚙️
+          Settings & Preferences <SettingsIcon className="inline-block w-5 h-5 ml-1" aria-hidden="true" />
         </h1>
         <p className="text-sm text-bloom-muted">
           Personalize your wellness routine, notification reminders, and account details
@@ -132,7 +132,7 @@ export default function Settings() {
         {/* Save Bar */}
         <div className="flex items-center justify-between pt-2">
           <Button type="submit" variant="primary" size="md" icon={saved ? Check : Sparkles}>
-            {saved ? 'Preferences Saved! 🌸' : 'Save Changes'}
+            {saved ? 'Preferences Saved!' : 'Save Changes'}
           </Button>
 
           <Button variant="ghost" size="sm" onClick={logout} icon={LogOut} className="text-rose-600">

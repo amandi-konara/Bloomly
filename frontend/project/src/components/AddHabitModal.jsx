@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { X, Plus, Sparkles } from './Icons';
+import { Flower2 } from 'lucide-react';
+import { X, Plus } from './Icons';
 import Button from './Button';
 import { dataService } from '../services/dataService';
 
@@ -47,8 +48,8 @@ export default function AddHabitModal({ isOpen, onClose, onAdded }) {
       <div className="bg-cream-50 w-full max-w-md rounded-4xl border border-bloom-border shadow-soft-lg overflow-hidden">
         <div className="flex items-center justify-between px-6 py-5 bg-white border-b border-bloom-border/60">
           <div className="flex items-center gap-2.5">
-            <span className="w-9 h-9 rounded-2xl bg-mint-100 flex items-center justify-center text-base">
-              🌸
+            <span className="w-9 h-9 rounded-2xl bg-mint-100 flex items-center justify-center text-sage-700">
+              <Flower2 className="w-5 h-5" aria-hidden="true" />
             </span>
             <h2 className="text-lg font-bold font-display text-bloom-dark">Nurture a New Habit</h2>
           </div>

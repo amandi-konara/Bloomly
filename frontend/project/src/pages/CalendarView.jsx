@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Sparkles, Clock, Check } from '../components/Icons';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Sparkles, Clock, Check } from '../components/Icons';
+import { Sprout } from 'lucide-react';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
@@ -73,7 +74,7 @@ export default function CalendarView() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-extrabold font-display text-bloom-dark">
-            Wellness Calendar 🗓️
+            Wellness Calendar <CalendarIcon className="inline-block w-5 h-5 ml-1" aria-hidden="true" />
           </h1>
           <p className="text-sm text-bloom-muted">
             Visualize your monthly consistency and revisit past feelings
@@ -138,8 +139,8 @@ export default function CalendarView() {
 
                   <div className="text-center">
                     {log ? (
-                      <span className="text-xl" title={log.mood}>
-                        {MOOD_CONFIG[log.mood]?.emoji || '🌱'}
+                      <span className="flex items-center justify-center" title={log.mood}>
+                        {MOOD_CONFIG[log.mood]?.icon && React.createElement(MOOD_CONFIG[log.mood].icon, { className: 'w-5 h-5' })}
                       </span>
                     ) : (
                       <span className="text-[10px] text-bloom-border">•</span>
@@ -201,7 +202,7 @@ export default function CalendarView() {
               </div>
             ) : (
               <div className="text-center py-8 space-y-3">
-                <p className="text-2xl">🌱</p>
+                <div className="flex justify-center"><Sprout className="w-8 h-8 text-sage-400" /></div>
                 <p className="text-xs text-bloom-muted">Click on any logged day in the calendar to review its memories and metrics.</p>
                 <Button variant="secondary" size="sm" onClick={() => setIsCheckInOpen(true)}>
                   Log Today's Entry

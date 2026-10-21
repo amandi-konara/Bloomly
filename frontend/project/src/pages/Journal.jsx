@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Flower2 } from 'lucide-react';
 import { Sparkles, BookOpen, Clock, Heart, Search } from '../components/Icons';
 import Card from '../components/Card';
 import Button from '../components/Button';
@@ -53,7 +54,7 @@ export default function Journal() {
               Mindful Reflections
             </Badge>
             <h1 className="text-2xl md:text-3xl font-extrabold font-display text-bloom-dark">
-              Wellness Journal & Little Blooms 📖
+              Wellness Journal & Little Blooms <BookOpen className="inline-block w-5 h-5 ml-1" aria-hidden="true" />
             </h1>
             <p className="text-sm text-bloom-muted leading-relaxed">
               A private, gentle sanctuary to record small moments of gratitude, study progress, and emotional check-ins.
@@ -106,20 +107,23 @@ export default function Journal() {
           >
             All Vibes
           </button>
-          {Object.keys(MOOD_CONFIG).map((m) => (
-            <button
-              key={m}
-              onClick={() => setSelectedMood(m)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap flex items-center gap-1 transition ${
-                selectedMood === m
-                  ? 'bg-sage-700 text-white'
-                  : 'bg-white border border-bloom-border text-bloom-muted hover:bg-cream-100'
-              }`}
-            >
-              <span>{MOOD_CONFIG[m].emoji}</span>
-              <span className="capitalize">{m}</span>
-            </button>
-          ))}
+          {Object.keys(MOOD_CONFIG).map((m) => {
+            const MoodIcon = MOOD_CONFIG[m].icon;
+            return (
+              <button
+                key={m}
+                onClick={() => setSelectedMood(m)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap flex items-center gap-1 transition ${
+                  selectedMood === m
+                    ? 'bg-sage-700 text-white'
+                    : 'bg-white border border-bloom-border text-bloom-muted hover:bg-cream-100'
+                }`}
+              >
+                <MoodIcon className="w-3.5 h-3.5" aria-hidden="true" />
+                <span className="capitalize">{m}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -153,7 +157,7 @@ export default function Journal() {
               {/* Little Bloom */}
               {log.littleWin && (
                 <div className="mb-3.5 p-3.5 rounded-2xl bg-cream-50 border border-bloom-border/70 flex items-start gap-3">
-                  <span className="text-base flex-shrink-0">🌼</span>
+                  <Flower2 className="w-5 h-5 flex-shrink-0 text-sage-600" aria-hidden="true" />
                   <div>
                     <span className="text-[11px] font-bold uppercase tracking-wider text-sage-800 block">
                       Today's Little Bloom
@@ -192,7 +196,7 @@ export default function Journal() {
 
         {filteredLogs.length === 0 && (
           <Card className="text-center py-12">
-            <p className="text-3xl mb-2">🌸</p>
+            <Flower2 className="w-8 h-8 mx-auto mb-2 text-sage-600" aria-hidden="true" />
             <h3 className="text-base font-bold text-bloom-dark">No entries matching your filter</h3>
             <p className="text-xs text-bloom-muted mb-4">Start your daily wellness reflection today</p>
             <Button variant="primary" size="sm" onClick={() => setIsCheckInOpen(true)}>

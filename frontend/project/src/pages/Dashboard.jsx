@@ -21,12 +21,14 @@ import {
   Activity,
   Heart,
 } from '../components/Icons';
+import { Flower, Star } from 'lucide-react';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
 import MoodBadge, { MOOD_CONFIG } from '../components/MoodBadge';
 import DailyCheckInModal from '../components/DailyCheckInModal';
 import AddHabitModal from '../components/AddHabitModal';
+import TipList from '../components/TipList';
 import { dataService } from '../services/dataService';
 import welcomeCharacter from '../assets/welcome-character.png';
 
@@ -48,7 +50,7 @@ export default function Dashboard() {
     ];
   });
   const [tips, setTips] = useState(
-    "🌸 Your garden is thriving! You've stayed consistent with your daily stretches and hydration even during busy study weeks.\n🌱 Notice how your energy peaks on days when you connect with friends — keep protecting those small pauses.\n✨ Give yourself permission to rest this evening; gentle consistency will always outgrow burnout."
+    "Your garden is thriving! You've stayed consistent with your daily stretches and hydration even during busy study weeks.\nNotice how your energy peaks on days when you connect with friends — keep protecting those small pauses.\nGive yourself permission to rest this evening; gentle consistency will always outgrow burnout."
   );
   const [loadingTips, setLoadingTips] = useState(false);
   const [isCheckInOpen, setIsCheckInOpen] = useState(false);
@@ -150,7 +152,7 @@ export default function Dashboard() {
               {todayDateString}
             </div>
             <h1 className="text-2xl md:text-3xl lg:text-4xl font-extrabold font-display text-bloom-dark tracking-tight">
-              {getGreeting()}, {user.name || 'Student'}! 🌸
+              {getGreeting()}, {user.name || 'Student'}!
             </h1>
             <p className="text-sm md:text-base text-bloom-muted leading-relaxed">
               Your garden is growing gently today. You've completed{' '}
@@ -204,8 +206,8 @@ export default function Dashboard() {
 
         {/* Today's Vibe */}
         <Card padding="p-4 sm:p-5" hover className="flex items-center gap-3 sm:gap-4">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-peach-100 border border-peach-200 flex items-center justify-center text-xl sm:text-2xl flex-shrink-0">
-            {MOOD_CONFIG[todayMood]?.emoji || '🌸'}
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-peach-100 border border-peach-200 flex items-center justify-center flex-shrink-0">
+            {MOOD_CONFIG[todayMood]?.icon && React.createElement(MOOD_CONFIG[todayMood].icon, { className: 'w-5 h-5 sm:w-6 sm:h-6' })}
           </div>
           <div className="min-w-0">
             <p className="text-sm sm:text-base font-bold font-display text-bloom-dark capitalize truncate">
@@ -418,7 +420,7 @@ export default function Dashboard() {
                         : 'bg-cream-50 border-bloom-border hover:bg-white hover:border-sage-200'
                     }`}
                   >
-                    <span className="text-2xl">{config.emoji}</span>
+                    <span className="text-2xl">{React.createElement(config.icon, { className: 'w-6 h-6' })}</span>
                     <span className="text-[10px] font-medium text-bloom-dark mt-1 capitalize">{key}</span>
                   </button>
                 );
@@ -430,8 +432,8 @@ export default function Dashboard() {
           <Card padding="p-6" className="bg-gradient-to-br from-white to-cream-100 border-sage-200">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <span className="w-8 h-8 rounded-xl bg-peach-100 flex items-center justify-center text-sm">
-                  🌷
+                <span className="w-8 h-8 rounded-xl bg-peach-100 flex items-center justify-center">
+                  <Flower className="w-4 h-4 text-rose-400" />
                 </span>
                 <h2 className="text-base font-bold font-display text-bloom-dark">Bloomly's Gentle Note</h2>
               </div>
@@ -445,8 +447,8 @@ export default function Dashboard() {
               </button>
             </div>
 
-            <div className="p-4 rounded-2xl bg-white/80 border border-bloom-border/70 text-xs md:text-sm text-bloom-dark leading-relaxed whitespace-pre-line space-y-2">
-              {tips || "Loading your personalized gentle guidance..."}
+            <div className="p-4 rounded-2xl bg-white/80 border border-bloom-border/70 text-xs md:text-sm text-bloom-dark leading-relaxed">
+              {tips ? <TipList tips={tips} /> : "Loading your personalized gentle guidance..."}
             </div>
             <p className="text-[10px] text-bloom-muted mt-2 text-right">Updated from your last 7 days of logs</p>
           </Card>
@@ -455,8 +457,8 @@ export default function Dashboard() {
           <Card padding="p-6">
             <div className="flex items-center justify-between mb-3.5">
               <div className="flex items-center gap-2">
-                <span className="w-8 h-8 rounded-xl bg-butter-100 flex items-center justify-center text-sm">
-                  ✨
+                <span className="w-8 h-8 rounded-xl bg-butter-100 flex items-center justify-center">
+                  <Star className="w-4 h-4 text-amber-400" />
                 </span>
                 <h2 className="text-base font-bold font-display text-bloom-dark">Recent Little Blooms</h2>
               </div>
@@ -477,7 +479,9 @@ export default function Dashboard() {
                     key={log._id}
                     className="p-3 rounded-2xl bg-cream-50 border border-bloom-border/70 text-xs text-bloom-dark flex items-start gap-2.5"
                   >
-                    <span className="text-sm flex-shrink-0 mt-0.5">🌼</span>
+                    <span className="text-sm flex-shrink-0 mt-0.5">
+                      <Flower className="w-4 h-4 text-amber-400" />
+                    </span>
                     <div className="min-w-0">
                       <p className="font-medium text-bloom-dark leading-snug">{log.littleWin}</p>
                       <p className="text-[10px] text-bloom-muted mt-1">

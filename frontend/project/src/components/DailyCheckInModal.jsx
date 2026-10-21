@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Sparkles, Check, Heart } from './Icons';
+import { X, Sparkles, Check, Heart, Utensils, PersonStanding, MonitorOff, MessageCircle, Droplets, TreePine, Sprout, Flower } from 'lucide-react';
 import { MOOD_CONFIG } from './MoodBadge';
 import Button from './Button';
 import { dataService } from '../services/dataService';
@@ -13,12 +13,12 @@ const ENERGY_LABELS = {
 };
 
 const CARE_ITEMS = [
-  { key: 'meal', label: 'Nourishing Meal', icon: '🍲' },
-  { key: 'stretch', label: 'Gentle Stretch', icon: '🧘' },
-  { key: 'screenBreak', label: 'Screen Curfew', icon: '📵' },
-  { key: 'friend', label: 'Friend Check-in', icon: '💬' },
-  { key: 'water', label: 'Hydration Goal', icon: '💧' },
-  { key: 'nature', label: 'Outdoor Air', icon: '🌿' },
+  { key: 'meal', label: 'Nourishing Meal', icon: Utensils },
+  { key: 'stretch', label: 'Gentle Stretch', icon: PersonStanding },
+  { key: 'screenBreak', label: 'Screen Curfew', icon: MonitorOff },
+  { key: 'friend', label: 'Friend Check-in', icon: MessageCircle },
+  { key: 'water', label: 'Hydration Goal', icon: Droplets },
+  { key: 'nature', label: 'Outdoor Air', icon: TreePine },
 ];
 
 export default function DailyCheckInModal({ isOpen, onClose, onSaved }) {
@@ -51,7 +51,7 @@ export default function DailyCheckInModal({ isOpen, onClose, onSaved }) {
       mood,
       energyLevel,
       studyHours: Number(studyHours),
-      littleWin: littleWin.trim() || 'Took mindful care of myself today 🌸',
+      littleWin: littleWin.trim() || 'Took mindful care of myself today',
       selfCare,
       notes: notes.trim(),
     };
@@ -72,8 +72,8 @@ export default function DailyCheckInModal({ isOpen, onClose, onSaved }) {
         {/* Header */}
         <div className="flex items-center justify-between px-7 py-5 bg-white border-b border-bloom-border/60">
           <div className="flex items-center gap-3">
-            <span className="w-10 h-10 rounded-2xl bg-sage-100 flex items-center justify-center text-lg">
-              🌱
+            <span className="w-10 h-10 rounded-2xl bg-sage-100 flex items-center justify-center">
+              <Sprout className="w-5 h-5 text-sage-700" />
             </span>
             <div>
               <h2 className="text-xl font-bold font-display text-bloom-dark">Today's Garden Check-in</h2>
@@ -109,7 +109,7 @@ export default function DailyCheckInModal({ isOpen, onClose, onSaved }) {
                         : 'bg-white/70 border-bloom-border hover:bg-white hover:border-sage-200'
                     }`}
                   >
-                    <span className="text-2xl mb-1">{config.emoji}</span>
+                    <span className="mb-1">{React.createElement(config.icon, { className: 'w-6 h-6' })}</span>
                     <span className="text-[11px] font-semibold text-bloom-dark line-clamp-1">{key}</span>
                   </button>
                 );
@@ -199,7 +199,7 @@ export default function DailyCheckInModal({ isOpen, onClose, onSaved }) {
                         : 'bg-white border-bloom-border text-bloom-muted hover:bg-cream-100'
                     }`}
                   >
-                    <span className="text-lg">{item.icon}</span>
+                    <item.icon className="text-lg w-5 h-5" />
                     <span className="text-xs font-medium line-clamp-1">{item.label}</span>
                   </button>
                 );
@@ -210,7 +210,7 @@ export default function DailyCheckInModal({ isOpen, onClose, onSaved }) {
           {/* Little Bloom Gratitude */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-bloom-muted mb-2">
-              5. Today's Little Bloom 🌼 (One small win or smile)
+              5. Today's Little Bloom <Flower className="inline w-4 h-4 text-amber-400" /> (One small win or smile)
             </label>
             <input
               type="text"
@@ -243,9 +243,8 @@ export default function DailyCheckInModal({ isOpen, onClose, onSaved }) {
               size="lg"
               disabled={saving}
               className="w-full py-4 text-base"
-              icon={celebrating ? Check : Sparkles}
-            >
-              {celebrating ? 'Garden Planted! 🌸' : saving ? 'Saving your bloom...' : "Save Today's Check-in"}
+              icon={celebrating ? Check : Sparkles}            >
+              {celebrating ? 'Garden Planted!' : saving ? 'Saving your bloom...' : "Save Today's Check-in"}
             </Button>
           </div>
         </form>

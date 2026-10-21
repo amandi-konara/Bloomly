@@ -376,8 +376,8 @@ export const dataService = {
     } catch (err) {
       console.warn('API getAiTips fallback:', err.message);
     }
-    return `🌸 Your garden is thriving! You've stayed consistent with your daily stretches and hydration even during busy study weeks.
-🌱 Notice how your energy peaks on days when you connect with friends — keep protecting those small social pauses.
-✨ Give yourself permission to rest this evening; gentle consistency will always outgrow burnout.`;
+    return `Your garden is thriving! You've stayed consistent with your daily stretches and hydration even during busy study weeks.
+Notice how your energy peaks on days when you connect with friends — keep protecting those small social pauses.
+Give yourself permission to rest this evening; gentle consistency will always outgrow burnout.`;
   },
 };
