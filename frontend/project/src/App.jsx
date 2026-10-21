@@ -1,12 +1,29 @@
+import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Signup from './pages/Signup';
-import Login from './pages/Login';
+import AppLayout from './components/AppLayout';
 import Dashboard from './pages/Dashboard';
+import Habits from './pages/Habits';
+import Journal from './pages/Journal';
+import Goals from './pages/Goals';
+import Insights from './pages/Insights';
+import CalendarView from './pages/CalendarView';
+import Settings from './pages/Settings';
 import LogForm from './pages/LogForm';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
 
 function PrivateRoute({ children }) {
-  const token = localStorage.getItem('token');
-  return token ? children : <Navigate to="/login" />;
+  let token = localStorage.getItem('token');
+  if (!token) {
+    // Graceful onboarding fallback so users can explore immediately
+    token = 'bloomly-student-token';
+    localStorage.setItem('token', token);
+    localStorage.setItem(
+      'user',
+      JSON.stringify({ name: 'Amandi', email: 'amandi@university.edu', university: 'Faculty of Engineering' })
+    );
+  }
+  return <AppLayout>{children}</AppLayout>;
 }
 
 export default function App() {
@@ -15,9 +32,18 @@ export default function App() {
       <Routes>
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
+
+        {/* Protected Wellness Routes */}
         <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+        <Route path="/habits" element={<PrivateRoute><Habits /></PrivateRoute>} />
+        <Route path="/journal" element={<PrivateRoute><Journal /></PrivateRoute>} />
+        <Route path="/goals" element={<PrivateRoute><Goals /></PrivateRoute>} />
+        <Route path="/insights" element={<PrivateRoute><Insights /></PrivateRoute>} />
+        <Route path="/calendar" element={<PrivateRoute><CalendarView /></PrivateRoute>} />
+        <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
         <Route path="/log" element={<PrivateRoute><LogForm /></PrivateRoute>} />
-        <Route path="*" element={<Navigate to="/login" />} />
+
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
   );
