@@ -3,6 +3,10 @@
 @tailwind utilities;
 
 @layer base {
+  html.dark {
+    color-scheme: dark;
+  }
+
   body {
     background-color: #FFF9F0;
     color: #263D34;
@@ -12,10 +16,118 @@
     min-height: 100vh;
   }
 
+  html.dark body {
+    background-color: #151d18;
+    color: #e4ede6;
+  }
+
   h1, h2, h3, h4, .font-display {
     font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
   }
 }
+
+html.dark .bg-white,
+html.dark .bg-white\/70,
+html.dark .bg-white\/80,
+html.dark .bg-white\/90,
+html.dark .bg-white\/95,
+html.dark .bg-cream-50 {
+  background-color: #202b24;
+}
+
+html.dark .bg-cream-100 {
+  background-color: #151d18;
+}
+
+html.dark .bg-cream-200,
+html.dark .bg-cream-200\/50,
+html.dark .bg-cream-200\/60 {
+  background-color: #29362e;
+}
+
+html.dark .bg-cream-300 {
+  background-color: #39473e;
+}
+
+html.dark .bg-sage-50,
+html.dark .bg-sage-100,
+html.dark .bg-mint-50,
+html.dark .bg-mint-100 {
+  background-color: #26352b;
+}
+
+html.dark .bg-sage-200,
+html.dark .bg-mint-200 {
+  background-color: #34473a;
+}
+
+html.dark .bg-sage-300,
+html.dark .bg-sage-400 {
+  background-color: #536f59;
+}
+
+html.dark .bg-sage-500,
+html.dark .bg-sage-600,
+html.dark .bg-sage-700 {
+  background-color: #3f674c;
+}
+
+html.dark .bg-butter-100,
+html.dark .bg-butter-50,
+html.dark .bg-peach-50,
+html.dark .bg-peach-100,
+html.dark .bg-peach-200 {
+  background-color: #3a3326;
+}
+
+html.dark .bg-gradient-to-r,
+html.dark .bg-gradient-to-br {
+  background-image: none;
+  background-color: #202b24;
+}
+
+html.dark .text-bloom-dark,
+html.dark .text-sage-800,
+html.dark .text-sage-900,
+html.dark .text-amber-900,
+html.dark .text-rose-900 {
+  color: #e4ede6;
+}
+
+html.dark .text-bloom-muted,
+html.dark .text-sage-700,
+html.dark .text-sage-600 {
+  color: #a9bbad;
+}
+
+html.dark .text-sage-500,
+html.dark .text-amber-800,
+html.dark .text-rose-800 {
+  color: #d8c08a;
+}
+
+html.dark .border-bloom-border,
+html.dark [class*="border-bloom-border/"],
+html.dark .border-sage-200,
+html.dark .border-cream-200,
+html.dark .border-cream-300,
+html.dark .border-peach-300,
+html.dark .border-mint-200,
+html.dark .border-butter-200 {
+  border-color: #3a4a3e;
+}
+
+html.dark input,
+html.dark select,
+html.dark textarea {
+  background-color: #202b24;
+  color: #e4ede6;
+  border-color: #3a4a3e;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #9aaa9d;
 
 /* Custom scrollbars with warm aesthetic */
 ::-webkit-scrollbar {
@@ -27,10 +139,19 @@
   background: #FFF9F0;
 }
 
+html.dark ::-webkit-scrollbar-track {
+  background: #151d18;
+}
+
 ::-webkit-scrollbar-thumb {
   background: #D1E0CD;
   border-radius: 9999px;
   border: 2px solid #FFF9F0;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: #3a4a3e;
+  border-color: #151d18;
 }
 
 ::-webkit-scrollbar-thumb:hover {

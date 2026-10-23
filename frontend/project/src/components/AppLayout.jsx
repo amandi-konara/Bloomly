@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   CheckSquare,
@@ -9,13 +9,13 @@ import {
   Calendar as CalendarIcon,
   Settings as SettingsIcon,
   LogOut,
-  Plus,
+  Moon,
   Sparkles,
+  Sun,
 } from './Icons';
 import bloomlyLogo from '../assets/bloomly-logo.png';
 import DailyCheckInModal from './DailyCheckInModal';
 import AddHabitModal from './AddHabitModal';
-import Button from './Button';
 
 const NAV_ITEMS = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -28,11 +28,17 @@ const NAV_ITEMS = [
 ];
 
 export default function AppLayout({ children }) {
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem('bloomly_theme') === 'dark';
+  });
   const [isCheckInOpen, setIsCheckInOpen] = useState(false);
   const [isAddHabitOpen, setIsAddHabitOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', darkMode);
+  }, [darkMode]);
 
   const user = JSON.parse(localStorage.getItem('user') || '{"name":"Amandi","email":"student@university.edu"}');
 
@@ -40,6 +46,13 @@ export default function AppLayout({ children }) {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     navigate('/login');
+  };
+
+  const toggleDarkMode = () => {
+    const enabled = !darkMode;
+    document.documentElement.classList.toggle('dark', enabled);
+    localStorage.setItem('bloomly_theme', enabled ? 'dark' : 'light');
+    setDarkMode(enabled);
   };
 
   const todayFormatted = new Date().toLocaleDateString('en-US', {
@@ -119,13 +132,24 @@ export default function AppLayout({ children }) {
                 <p className="text-[10px] text-bloom-muted truncate">{todayFormatted}</p>
               </div>
             </div>
-            <button
-              onClick={logout}
-              title="Log out"
-              className="p-1.5 rounded-xl text-bloom-muted hover:text-rose-600 hover:bg-peach-100/60 transition"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={toggleDarkMode}
+                title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+                aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+                aria-pressed={darkMode}
+                className="p-1.5 rounded-xl text-bloom-muted hover:text-bloom-dark hover:bg-cream-200/60 transition"
+              >
+                {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </button>
+              <button
+                onClick={logout}
+                title="Log out"
+                className="p-1.5 rounded-xl text-bloom-muted hover:text-rose-600 hover:bg-peach-100/60 transition"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       </aside>
@@ -139,6 +163,15 @@ export default function AppLayout({ children }) {
             <span className="font-display font-extrabold text-base text-sage-800">Bloomly</span>
           </div>
           <div className="flex items-center gap-1.5">
+            <button
+              onClick={toggleDarkMode}
+              title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+              aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+              aria-pressed={darkMode}
+              className="p-1.5 rounded-xl text-bloom-dark hover:bg-cream-200"
+            >
+              {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
             <button
               onClick={() => setIsCheckInOpen(true)}
               className="px-2.5 py-1 rounded-xl bg-sage-300 text-sage-900 text-[11px] font-bold shadow-sm"
