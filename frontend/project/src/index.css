@@ -128,6 +128,7 @@ html.dark textarea {
 html.dark input::placeholder,
 html.dark textarea::placeholder {
   color: #9aaa9d;
+}
 
 /* Custom scrollbars with warm aesthetic */
 ::-webkit-scrollbar {
