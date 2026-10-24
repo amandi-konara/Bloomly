@@ -120,42 +120,48 @@ export default function AppLayout({ children }) {
           </nav>
         </div>
 
-        {/* Sidebar Footer: User & Logout */}
-        <div className="pt-4 border-t border-bloom-border/60 px-2 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-9 h-9 rounded-full bg-peach-200 border border-peach-300 flex items-center justify-center font-bold text-sm text-peach-700 flex-shrink-0">
-                {(user.name || 'A').charAt(0).toUpperCase()}
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-bloom-dark truncate">{user.name || 'Student'}</p>
-                <p className="text-[10px] text-bloom-muted truncate">{todayFormatted}</p>
-              </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <header className="sticky top-0 z-30 border-b border-bloom-border/70 bg-white/80 backdrop-blur-md">
+          <div className="flex items-center justify-between gap-3 px-4 py-3 md:px-6 md:py-4">
+            <div className="hidden md:flex items-center gap-2 text-sm text-bloom-muted">
+              <span className="inline-flex h-2.5 w-2.5 rounded-full bg-sage-400" />
+              <span>{todayFormatted}</span>
             </div>
-            <div className="flex items-center gap-1">
+
+            <div className="md:ml-auto flex items-center gap-2.5">
               <button
                 onClick={toggleDarkMode}
                 title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
                 aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
                 aria-pressed={darkMode}
-                className="p-1.5 rounded-xl text-bloom-muted hover:text-bloom-dark hover:bg-cream-200/60 transition"
+                className="p-2.5 rounded-xl border border-bloom-border bg-white/80 text-bloom-dark hover:bg-cream-200/60 transition"
               >
                 {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
-              <button
-                onClick={logout}
-                title="Log out"
-                className="p-1.5 rounded-xl text-bloom-muted hover:text-rose-600 hover:bg-peach-100/60 transition"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
+
+              <div className="flex items-center gap-2 rounded-2xl border border-bloom-border bg-white/80 px-2.5 py-2 shadow-soft">
+                <div className="w-9 h-9 rounded-full bg-peach-200 border border-peach-300 flex items-center justify-center font-bold text-sm text-peach-700 flex-shrink-0">
+                  {(user.name || 'A').charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0 text-left">
+                  <p className="text-xs font-bold text-bloom-dark truncate">{user.name || 'Student'}</p>
+                  <p className="text-[10px] text-bloom-muted truncate">{todayFormatted}</p>
+                </div>
+                <button
+                  onClick={logout}
+                  title="Log out"
+                  className="p-1.5 rounded-xl text-bloom-muted hover:text-rose-600 hover:bg-peach-100/60 transition"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      </aside>
+        </header>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         {/* Mobile Header Bar */}
         <header className="md:hidden flex items-center justify-between px-4 py-3 bg-white/95 backdrop-blur-md border-b border-bloom-border sticky top-0 z-30">
           <div className="flex items-center gap-2">
@@ -168,7 +174,7 @@ export default function AppLayout({ children }) {
               title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
               aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
               aria-pressed={darkMode}
-              className="p-1.5 rounded-xl text-bloom-dark hover:bg-cream-200"
+              className="p-1.5 rounded-xl border border-bloom-border bg-white text-bloom-dark"
             >
               {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
