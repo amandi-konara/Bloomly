@@ -5,7 +5,6 @@ import {
   CheckSquare,
   BookOpen,
   BarChart3,
-  Calendar as CalendarIcon,
   Settings as SettingsIcon,
   LogOut,
   Moon,
@@ -20,9 +19,8 @@ import DailyCheckInModal from './DailyCheckInModal';
 const NAV_ITEMS = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/habits', label: 'My Habits', icon: CheckSquare },
-  { path: '/journal', label: 'Wellness Journal', icon: BookOpen },
+  { path: '/journal', label: 'Journal', icon: BookOpen },
   { path: '/progress', label: 'Progress', icon: BarChart3 },
-  { path: '/calendar', label: 'Calendar', icon: CalendarIcon },
   { path: '/settings', label: 'Settings', icon: SettingsIcon },
 ];
 

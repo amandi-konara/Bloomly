@@ -4,7 +4,6 @@ import Dashboard from './pages/Dashboard';
 import Habits from './pages/Habits';
 import Journal from './pages/Journal';
 import Progress from './pages/Progress';
-import CalendarView from './pages/CalendarView';
 import Settings from './pages/Settings';
 import LogForm from './pages/LogForm';
 import Login from './pages/Login';
@@ -38,7 +37,7 @@ export default function App() {
         <Route path="/progress" element={<PrivateRoute><Progress /></PrivateRoute>} />
         <Route path="/goals" element={<Navigate to="/progress" replace />} />
         <Route path="/insights" element={<Navigate to="/progress" replace />} />
-        <Route path="/calendar" element={<PrivateRoute><CalendarView /></PrivateRoute>} />
+        <Route path="/calendar" element={<Navigate to="/journal" replace />} />
         <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
         <Route path="/log" element={<PrivateRoute><LogForm /></PrivateRoute>} />
 

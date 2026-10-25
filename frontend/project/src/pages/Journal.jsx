@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, Heart, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, Heart, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import { dataService } from '../services/dataService';
@@ -41,6 +41,21 @@ function getEntryDateKey(value) {
   return Number.isNaN(date.getTime()) ? '' : getLocalDateKey(date);
 }
 
+function getMonthDays(date) {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const startOffset = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  return [
+    ...Array.from({ length: startOffset }, (_, index) => ({ key: `blank-${index}`, day: null })),
+    ...Array.from({ length: daysInMonth }, (_, index) => ({
+      key: `${year}-${month}-${index + 1}`,
+      day: index + 1,
+      date: new Date(year, month, index + 1, 12),
+    })),
+  ];
+}
+
 function getMoodLabel(value) {
   return MOODS.find((mood) => mood.value === value)?.label || value || 'Okay';
 }
@@ -58,15 +73,27 @@ function getErrorMessage(error, fallback) {
   return error.response?.data?.error || error.message || fallback;
 }
 
+function getInitialHabitState() {
+  try {
+    return { habits: dataService.getDashboardHabits(), error: '' };
+  } catch {
+    return { habits: [], error: 'Habit completion records could not be loaded.' };
+  }
+}
+
 export default function Journal() {
   const [entries, setEntries] = useState([]);
+  const [habitState] = useState(getInitialHabitState);
+  const habits = habitState.habits;
   const [dateFilter, setDateFilter] = useState('');
+  const [currentMonth, setCurrentMonth] = useState(() => new Date());
   const [form, setForm] = useState(EMPTY_FORM);
   const [editingId, setEditingId] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const habitError = habitState.error;
 
   useEffect(() => {
     let active = true;
@@ -90,9 +117,27 @@ export default function Journal() {
       .filter((entry) => !dateFilter || getEntryDateKey(entry.date) === dateFilter)
       .sort((first, second) => new Date(second.date) - new Date(first.date))
   ), [entries, dateFilter]);
+  const calendarDays = useMemo(() => getMonthDays(currentMonth), [currentMonth]);
+  const entriesByDate = useMemo(
+    () => new Set(entries.map((entry) => getEntryDateKey(entry.date))),
+    [entries],
+  );
+  const habitDates = useMemo(() => new Set(
+    habits.flatMap((habit) => (habit.completionDates || []).map((date) => (
+      /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : getEntryDateKey(date)
+    ))),
+  ), [habits]);
+  const completedHabitsOnDate = dateFilter
+    ? habits.filter((habit) => (habit.completionDates || []).some((date) => (
+      ( /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : getEntryDateKey(date)) === dateFilter
+    )))
+    : [];
+  const entriesOnDate = dateFilter
+    ? entries.filter((entry) => getEntryDateKey(entry.date) === dateFilter)
+    : [];
 
   const openCreateForm = () => {
-    setForm({ ...EMPTY_FORM, date: getLocalDateKey(new Date()) });
+    setForm({ ...EMPTY_FORM, date: dateFilter || getLocalDateKey(new Date()) });
     setEditingId(null);
     setError('');
     setIsFormOpen(true);
@@ -116,6 +161,16 @@ export default function Journal() {
   const closeForm = () => {
     setIsFormOpen(false);
     setEditingId(null);
+  };
+
+  const changeMonth = (offset) => {
+    setCurrentMonth((month) => new Date(month.getFullYear(), month.getMonth() + offset, 1));
+  };
+
+  const selectDate = (date) => {
+    const key = getLocalDateKey(date);
+    setDateFilter(key);
+    setCurrentMonth(new Date(date.getFullYear(), date.getMonth(), 1));
   };
 
   const updateField = (field, value) => {
@@ -310,24 +365,146 @@ export default function Journal() {
         </Card>
       )}
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-lg font-bold font-display text-bloom-dark">Your entries</h2>
-        <label className="flex items-center gap-2 text-sm text-bloom-muted">
-          <CalendarDays className="h-4 w-4" aria-hidden="true" />
-          <span className="sr-only">Filter entries by date</span>
-          <input
-            type="date"
-            aria-label="Filter entries by date"
-            value={dateFilter}
-            onChange={(event) => setDateFilter(event.target.value)}
-            className="rounded-xl border border-bloom-border bg-white px-3 py-2 text-sm text-bloom-dark"
-          />
+      <Card padding="p-4 sm:p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-base font-bold font-display text-bloom-dark">Browse by date</h2>
+            <p className="mt-0.5 text-xs text-bloom-muted">Select a date to view journal entries and habit completions.</p>
+          </div>
+          <label className="flex items-center gap-2 text-sm text-bloom-muted">
+            <CalendarDays className="h-4 w-4" aria-hidden="true" />
+            <span className="sr-only">Filter entries by date</span>
+            <input
+              type="date"
+              aria-label="Filter entries by date"
+              value={dateFilter}
+              onChange={(event) => {
+                if (!event.target.value) {
+                  setDateFilter('');
+                  return;
+                }
+                const [year, month, day] = event.target.value.split('-').map(Number);
+                selectDate(new Date(year, month - 1, day, 12));
+              }}
+              className="rounded-xl border border-bloom-border bg-white px-3 py-2 text-sm text-bloom-dark"
+            />
+          </label>
+        </div>
+
+        <div className="mt-4 flex items-center justify-between gap-2">
+          <button
+            type="button"
+            onClick={() => changeMonth(-1)}
+            aria-label="Previous month"
+            className="grid h-9 w-9 place-items-center rounded-xl border border-bloom-border bg-white text-bloom-muted hover:bg-cream-100"
+          >
+            <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+          </button>
+          <h3 className="text-sm font-semibold text-bloom-dark">
+            {currentMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
+          </h3>
+          <button
+            type="button"
+            onClick={() => changeMonth(1)}
+            aria-label="Next month"
+            className="grid h-9 w-9 place-items-center rounded-xl border border-bloom-border bg-white text-bloom-muted hover:bg-cream-100"
+          >
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="mt-3 grid grid-cols-7 gap-1 text-center text-[11px] font-semibold text-bloom-muted sm:gap-2">
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((weekday) => <span key={weekday}>{weekday}</span>)}
+        </div>
+        <div className="mt-2 grid grid-cols-7 gap-1 sm:gap-2">
+          {calendarDays.map(({ key, day, date }) => {
+            if (!day) return <span key={key} aria-hidden="true" className="min-h-10 sm:min-h-12" />;
+            const dateKey = getLocalDateKey(date);
+            const hasEntry = entriesByDate.has(dateKey);
+            const hasCompletion = habitDates.has(dateKey);
+            const isToday = dateKey === getLocalDateKey(new Date());
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => selectDate(date)}
+                aria-pressed={dateFilter === dateKey}
+                aria-label={`${date.toLocaleDateString(undefined, { dateStyle: 'full' })}${hasEntry ? ', journal entry saved' : ''}${hasCompletion ? ', habit completion recorded' : ''}`}
+                className={`relative flex min-h-10 flex-col items-center justify-center rounded-xl border text-sm transition sm:min-h-12 ${
+                  dateFilter === dateKey
+                    ? 'border-sage-500 bg-sage-100 font-semibold text-sage-900'
+                    : isToday
+                      ? 'border-sage-300 bg-sage-50 text-sage-900'
+                      : 'border-transparent text-bloom-dark hover:border-bloom-border hover:bg-cream-100'
+                }`}
+              >
+                {day}
+                {(hasEntry || hasCompletion) && (
+                  <span className="mt-0.5 flex gap-0.5" aria-hidden="true">
+                    {hasEntry && <span className="h-1 w-1 rounded-full bg-peach-500" />}
+                    {hasCompletion && <span className="h-1 w-1 rounded-full bg-sage-700" />}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-bloom-muted">
+          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-peach-500" />Journal entry</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-sage-700" />Habit completion</span>
           {dateFilter && (
-            <button type="button" onClick={() => setDateFilter('')} className="font-medium text-sage-800 hover:underline">
-              Clear
+            <button
+              type="button"
+              onClick={() => setDateFilter('')}
+              className="ml-auto font-medium text-sage-800 hover:underline"
+            >
+              Clear date
             </button>
           )}
-        </label>
+        </div>
+      </Card>
+
+      {dateFilter && (
+        <Card padding="p-4 sm:p-5">
+          <h2 className="text-sm font-bold text-bloom-dark">{formatDate(`${dateFilter}T12:00:00`)}</h2>
+          {habitError && <p role="alert" className="mt-2 text-sm text-rose-700">{habitError}</p>}
+          <div className="mt-3 grid gap-4 sm:grid-cols-2">
+            <div>
+              <h3 className="text-xs font-semibold text-bloom-muted">Habit completions</h3>
+              {completedHabitsOnDate.length ? (
+                <ul className="mt-2 space-y-1.5">
+                  {completedHabitsOnDate.map((habit) => (
+                    <li key={habit.id} className="flex items-center gap-2 text-sm text-bloom-dark">
+                      <span className="h-2 w-2 rounded-full bg-sage-700" aria-hidden="true" />
+                      {habit.title}{habit.archived ? ' (archived)' : ''}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-2 text-sm text-bloom-muted">No habit completions recorded for this date.</p>
+              )}
+            </div>
+            <div>
+              <h3 className="text-xs font-semibold text-bloom-muted">Journal entries</h3>
+              <p className="mt-2 text-sm text-bloom-muted">
+                {entriesOnDate.length
+                  ? `${entriesOnDate.length} saved ${entriesOnDate.length === 1 ? 'entry' : 'entries'} shown below.`
+                  : 'No journal entries saved for this date.'}
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-lg font-bold font-display text-bloom-dark">
+          {dateFilter ? 'Entries for selected date' : 'Your entries'}
+        </h2>
+        {dateFilter && (
+          <button type="button" onClick={() => setDateFilter('')} className="text-sm font-medium text-sage-800 hover:underline">
+            Show all entries
+          </button>
+        )}
       </div>
 
       {loading ? (
