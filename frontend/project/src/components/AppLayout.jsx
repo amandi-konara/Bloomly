@@ -4,7 +4,6 @@ import {
   LayoutDashboard,
   CheckSquare,
   BookOpen,
-  Target,
   BarChart3,
   Calendar as CalendarIcon,
   Settings as SettingsIcon,
@@ -22,8 +21,7 @@ const NAV_ITEMS = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/habits', label: 'My Habits', icon: CheckSquare },
   { path: '/journal', label: 'Wellness Journal', icon: BookOpen },
-  { path: '/goals', label: 'Goals & Milestones', icon: Target },
-  { path: '/insights', label: 'Insights & Trends', icon: BarChart3 },
+  { path: '/progress', label: 'Progress', icon: BarChart3 },
   { path: '/calendar', label: 'Calendar', icon: CalendarIcon },
   { path: '/settings', label: 'Settings', icon: SettingsIcon },
 ];

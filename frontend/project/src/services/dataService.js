@@ -364,7 +364,9 @@ export const dataService = {
       throw new Error('Saved habits are not a list.');
     }
 
-    return habits.filter((habit) => !/^h-[1-5]$/.test(habit.id));
+    return habits
+      .filter((habit) => !/^h-[1-5]$/.test(habit.id))
+      .map(normalizeHabit);
   },
 
   saveHabits(habits) {
@@ -470,8 +472,34 @@ export const dataService = {
     return INITIAL_GOALS;
   },
 
+  getProgressGoals() {
+    const raw = localStorage.getItem(STORAGE_KEYS.GOALS);
+    if (!raw) return [];
+    const goals = JSON.parse(raw);
+    if (!Array.isArray(goals)) {
+      throw new Error('Saved goals are not a list.');
+    }
+    return goals.filter((goal) => !/^g-[1-4]$/.test(goal.id));
+  },
+
   saveGoals(goals) {
     localStorage.setItem(STORAGE_KEYS.GOALS, JSON.stringify(goals));
+  },
+
+  addProgressGoal(goal) {
+    const updated = [...this.getProgressGoals(), {
+      id: `g-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      createdAt: new Date().toISOString(),
+      ...goal,
+    }];
+    this.saveGoals(updated);
+    return updated;
+  },
+
+  deleteProgressGoal(id) {
+    const updated = this.getProgressGoals().filter((goal) => goal.id !== id);
+    this.saveGoals(updated);
+    return updated;
   },
 
   addGoal(goal) {

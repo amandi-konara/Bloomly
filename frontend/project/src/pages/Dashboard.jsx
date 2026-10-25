@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarDays, Check, HeartPulse, RefreshCw, Sprout } from 'lucide-react';
+import { Check, HeartPulse, RefreshCw, Sprout } from 'lucide-react';
 import Card from '../components/Card';
 import DailyCheckInModal from '../components/DailyCheckInModal';
 import { dataService } from '../services/dataService';
@@ -99,18 +99,6 @@ export default function Dashboard() {
   const scheduledHabits = habits.filter((habit) => isScheduledToday(habit, today.getDay()));
   const completedCount = scheduledHabits.filter((habit) => habit.completedToday).length;
   const todayLog = logs.find((log) => new Date(log.date).toDateString() === today.toDateString());
-  const weeklyStats = habits.reduce(
-    (stats, habit) => {
-      if (!Array.isArray(habit.history)) return stats;
-      const week = habit.history.slice(-7);
-      return {
-        completed: stats.completed + week.filter(Boolean).length,
-        tracked: stats.tracked + week.length,
-      };
-    },
-    { completed: 0, tracked: 0 },
-  );
-
   const handleToggleHabit = (id) => {
     setSavingHabitId(id);
     try {
@@ -230,24 +218,7 @@ export default function Dashboard() {
           )}
         </Card>
 
-        <div className="space-y-4">
-          <Card padding="p-5" className="bg-sage-50/80">
-            <div className="flex items-center gap-2">
-              <CalendarDays className="h-4 w-4 text-sage-700" aria-hidden="true" />
-              <h2 className="text-sm font-bold text-bloom-dark">Last 7 days</h2>
-            </div>
-            {weeklyStats.tracked > 0 ? (
-              <p className="mt-2 text-sm text-bloom-muted">
-                <span className="font-semibold text-bloom-dark">{weeklyStats.completed} of {weeklyStats.tracked}</span>
-                {' '}habit check-ins completed
-              </p>
-            ) : (
-              <p className="mt-2 text-sm text-bloom-muted">
-                Add a habit to start tracking your weekly progress.
-              </p>
-            )}
-          </Card>
-
+        <div>
           <Card padding="p-5">
             <div className="flex items-start gap-3">
               <span className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-xl bg-peach-100 text-rose-700">

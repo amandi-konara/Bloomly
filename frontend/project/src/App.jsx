@@ -1,11 +1,9 @@
-import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppLayout from './components/AppLayout';
 import Dashboard from './pages/Dashboard';
 import Habits from './pages/Habits';
 import Journal from './pages/Journal';
-import Goals from './pages/Goals';
-import Insights from './pages/Insights';
+import Progress from './pages/Progress';
 import CalendarView from './pages/CalendarView';
 import Settings from './pages/Settings';
 import LogForm from './pages/LogForm';
@@ -37,8 +35,9 @@ export default function App() {
         <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
         <Route path="/habits" element={<PrivateRoute><Habits /></PrivateRoute>} />
         <Route path="/journal" element={<PrivateRoute><Journal /></PrivateRoute>} />
-        <Route path="/goals" element={<PrivateRoute><Goals /></PrivateRoute>} />
-        <Route path="/insights" element={<PrivateRoute><Insights /></PrivateRoute>} />
+        <Route path="/progress" element={<PrivateRoute><Progress /></PrivateRoute>} />
+        <Route path="/goals" element={<Navigate to="/progress" replace />} />
+        <Route path="/insights" element={<Navigate to="/progress" replace />} />
         <Route path="/calendar" element={<PrivateRoute><CalendarView /></PrivateRoute>} />
         <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
         <Route path="/log" element={<PrivateRoute><LogForm /></PrivateRoute>} />
