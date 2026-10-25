@@ -219,6 +219,15 @@ export const dataService = {
     return INITIAL_LOGS;
   },
 
+  async getDashboardLogs() {
+    const res = await api.get('/logs');
+    if (!Array.isArray(res.data)) {
+      throw new Error('The logs response was not a list.');
+    }
+    localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(res.data));
+    return res.data;
+  },
+
   async addLog(logData) {
     let savedLog = null;
     try {
@@ -258,6 +267,18 @@ export const dataService = {
     return INITIAL_HABITS;
   },
 
+  getDashboardHabits() {
+    const raw = localStorage.getItem(STORAGE_KEYS.HABITS);
+    if (!raw) return [];
+
+    const habits = JSON.parse(raw);
+    if (!Array.isArray(habits)) {
+      throw new Error('Saved habits are not a list.');
+    }
+
+    return habits.filter((habit) => !/^h-[1-5]$/.test(habit.id));
+  },
+
   saveHabits(habits) {
     localStorage.setItem(STORAGE_KEYS.HABITS, JSON.stringify(habits));
   },
@@ -271,6 +292,9 @@ export const dataService = {
           ...h,
           completedToday: nextState,
           streak: nextState ? h.streak + 1 : Math.max(0, h.streak - 1),
+          history: Array.isArray(h.history)
+            ? [...h.history.slice(0, -1), nextState]
+            : [nextState],
         };
       }
       return h;
