@@ -4,7 +4,6 @@ const STORAGE_KEYS = {
   LOGS: 'bloomly_logs',
   HABITS: 'bloomly_habits',
   GOALS: 'bloomly_goals',
-  SETTINGS: 'bloomly_settings',
 };
 
 const LEGACY_FREQUENCIES = ['Daily', 'Weekdays', '3 days/week', 'Weekends', 'Every night'];
@@ -186,17 +185,6 @@ const INITIAL_GOALS = [
   },
 ];
 
-const INITIAL_SETTINGS = {
-  name: 'Amandi',
-  email: 'amandi@university.edu',
-  university: 'Faculty of Engineering',
-  dailyReminder: '20:30',
-  notifications: true,
-  cozySounds: true,
-  weeklyReport: true,
-  accentTheme: 'sage',
-};
-
 function toHabitDateKey(date) {
   const value = date instanceof Date ? date : new Date(date);
   if (Number.isNaN(value.getTime())) {
@@ -255,6 +243,16 @@ function normalizeHabit(habit) {
 }
 
 export const dataService = {
+  async getAccountSettings() {
+    const res = await api.get('/auth/me');
+    return res.data;
+  },
+
+  async saveAccountSettings(settings) {
+    const res = await api.put('/auth/me', settings);
+    return res.data;
+  },
+
   // --- Logs ---
   async getLogs() {
     try {
@@ -533,23 +531,6 @@ export const dataService = {
     });
     this.saveGoals(updated);
     return updated;
-  },
-
-  // --- Settings ---
-  getSettings() {
-    const raw = localStorage.getItem(STORAGE_KEYS.SETTINGS);
-    if (raw) {
-      try {
-        return { ...INITIAL_SETTINGS, ...JSON.parse(raw) };
-      } catch {
-        // ignore
-      }
-    }
-    return INITIAL_SETTINGS;
-  },
-
-  saveSettings(settings) {
-    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
   },
 
   // --- AI Tips with Warm Fallbacks ---

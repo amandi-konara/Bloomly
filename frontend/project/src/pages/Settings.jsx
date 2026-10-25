@@ -1,35 +1,90 @@
-import React, { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, Check, LogOut, Heart, Sparkles } from '../components/Icons';
-import Card from '../components/Card';
-import Button from '../components/Button';
-import Badge from '../components/Badge';
-import { dataService } from '../services/dataService';
+import { useEffect, useState } from 'react';
+import { Check, LogOut, Moon, Save, Sun } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import Button from '../components/Button';
+import Card from '../components/Card';
+import { dataService } from '../services/dataService';
+
+function getErrorMessage(error) {
+  return error.response?.data?.error || 'Settings could not be saved. Please try again.';
+}
 
 export default function Settings() {
-  const [settings, setSettings] = useState(dataService.getSettings());
+  const [settings, setSettings] = useState({ name: '', email: '', reminderTime: '' });
+  const [loading, setLoading] = useState(true);
+  const [accountLoaded, setAccountLoaded] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('bloomly_theme') === 'dark');
   const navigate = useNavigate();
 
   useEffect(() => {
-    setSettings(dataService.getSettings());
+    let active = true;
+    dataService.getAccountSettings()
+      .then((account) => {
+        if (active) {
+          setSettings({
+            name: account.name || '',
+            email: account.email || '',
+            reminderTime: account.reminderTime || '',
+          });
+          setAccountLoaded(true);
+        }
+      })
+      .catch((loadError) => {
+        if (active) {
+          setError(loadError.response?.data?.error || 'Account settings could not be loaded.');
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
-  const handleChange = (key, value) => {
-    setSettings((prev) => ({ ...prev, [key]: value }));
+  const handleSave = async (event) => {
+    event.preventDefault();
+    setSaving(true);
+    setSaved(false);
+    setError('');
+    try {
+      const account = await dataService.saveAccountSettings({
+        name: settings.name.trim(),
+        email: settings.email.trim(),
+        reminderTime: settings.reminderTime,
+      });
+      setSettings({
+        name: account.name || '',
+        email: account.email || '',
+        reminderTime: account.reminderTime || '',
+      });
+      try {
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        localStorage.setItem('user', JSON.stringify({ ...storedUser, name: account.name, email: account.email }));
+      } catch {
+        localStorage.setItem('user', JSON.stringify({ name: account.name, email: account.email }));
+      }
+      setSaved(true);
+      window.setTimeout(() => setSaved(false), 2000);
+    } catch (saveError) {
+      setError(getErrorMessage(saveError));
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleSave = (e) => {
-    e.preventDefault();
-    dataService.saveSettings(settings);
-    // Also sync user name in localStorage
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    user.name = settings.name;
-    user.email = settings.email;
-    localStorage.setItem('user', JSON.stringify(user));
+  const updateField = (field) => (event) => {
+    setSettings((current) => ({ ...current, [field]: event.target.value }));
+  };
 
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const toggleTheme = () => {
+    const enabled = !darkMode;
+    document.documentElement.classList.toggle('dark', enabled);
+    localStorage.setItem('bloomly_theme', enabled ? 'dark' : 'light');
+    setDarkMode(enabled);
   };
 
   const logout = () => {
@@ -39,107 +94,105 @@ export default function Settings() {
   };
 
   return (
-    <div className="space-y-7 animate-fade-in max-w-3xl">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl md:text-3xl font-extrabold font-display text-bloom-dark">
-          Settings & Preferences <SettingsIcon className="inline-block w-5 h-5 ml-1" aria-hidden="true" />
-        </h1>
-        <p className="text-sm text-bloom-muted">
-          Personalize your wellness routine, notification reminders, and account details
+    <div className="mx-auto max-w-2xl space-y-6 animate-fade-in">
+      <header>
+        <h1 className="text-2xl font-extrabold font-display text-bloom-dark sm:text-3xl">Settings</h1>
+        <p className="mt-1 text-sm text-bloom-muted">Manage your account and preferences.</p>
+      </header>
+
+      {error && (
+        <p role="alert" className="rounded-xl border border-peach-200 bg-peach-50 px-4 py-3 text-sm text-rose-800">
+          {error}
         </p>
-      </div>
+      )}
 
-      <form onSubmit={handleSave} className="space-y-6">
-        {/* Profile Card */}
-        <Card padding="p-6" className="space-y-4">
-          <h2 className="text-base font-bold font-display text-bloom-dark pb-2 border-b border-bloom-border">
-            Student Profile
-          </h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <form id="settings-form" onSubmit={handleSave} className="space-y-4">
+        <Card padding="p-5 sm:p-6">
+          <h2 className="text-base font-bold font-display text-bloom-dark">Profile</h2>
+          <p className="mt-1 text-sm text-bloom-muted">These details are saved to your account.</p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-bloom-muted mb-1.5">
-                Full Name
-              </label>
+              <label htmlFor="settings-name" className="mb-1.5 block text-sm font-medium text-bloom-dark">Name</label>
               <input
+                id="settings-name"
                 type="text"
-                value={settings.name || ''}
-                onChange={(e) => handleChange('name', e.target.value)}
-                className="w-full p-3 rounded-2xl border border-bloom-border bg-white text-sm text-bloom-dark focus:outline-none focus:ring-2 focus:ring-sage-300"
+                required
+                maxLength={80}
+                autoComplete="name"
+                value={settings.name}
+                onChange={updateField('name')}
+                disabled={loading || saving || !accountLoaded}
+                className="w-full rounded-xl border border-bloom-border bg-white px-3.5 py-3 text-sm text-bloom-dark focus:outline-none focus:ring-2 focus:ring-sage-300 disabled:opacity-60"
               />
             </div>
-
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-bloom-muted mb-1.5">
-                University Email
-              </label>
+              <label htmlFor="settings-email" className="mb-1.5 block text-sm font-medium text-bloom-dark">Email</label>
               <input
+                id="settings-email"
                 type="email"
-                value={settings.email || ''}
-                onChange={(e) => handleChange('email', e.target.value)}
-                className="w-full p-3 rounded-2xl border border-bloom-border bg-white text-sm text-bloom-dark focus:outline-none focus:ring-2 focus:ring-sage-300"
+                required
+                maxLength={254}
+                autoComplete="email"
+                value={settings.email}
+                onChange={updateField('email')}
+                disabled={loading || saving || !accountLoaded}
+                className="w-full rounded-xl border border-bloom-border bg-white px-3.5 py-3 text-sm text-bloom-dark focus:outline-none focus:ring-2 focus:ring-sage-300 disabled:opacity-60"
               />
             </div>
           </div>
+        </Card>
 
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-bloom-muted mb-1.5">
-              Faculty / Major
+        <Card padding="p-5 sm:p-6">
+          <h2 className="text-base font-bold font-display text-bloom-dark">Reminder preference</h2>
+          <p className="mt-1 text-sm text-bloom-muted">
+            Save a preferred check-in time to your account. Bloomly does not currently deliver reminders or notifications.
+          </p>
+          <div className="mt-4 max-w-xs">
+            <label htmlFor="settings-reminder-time" className="mb-1.5 block text-sm font-medium text-bloom-dark">
+              Preferred reminder time <span className="font-normal text-bloom-muted">(optional)</span>
             </label>
             <input
-              type="text"
-              value={settings.university || ''}
-              onChange={(e) => handleChange('university', e.target.value)}
-              className="w-full p-3 rounded-2xl border border-bloom-border bg-white text-sm text-bloom-dark focus:outline-none focus:ring-2 focus:ring-sage-300"
-            />
-          </div>
-        </Card>
-
-        {/* Routine Preferences */}
-        <Card padding="p-6" className="space-y-4">
-          <h2 className="text-base font-bold font-display text-bloom-dark pb-2 border-b border-bloom-border">
-            Mindful Routine & Reminders
-          </h2>
-
-          <div className="flex items-center justify-between p-3 rounded-2xl bg-cream-50 border border-bloom-border">
-            <div>
-              <p className="text-xs font-bold text-bloom-dark">Evening Check-in Reminder</p>
-              <p className="text-[11px] text-bloom-muted">A gentle notification to record your daily vibe</p>
-            </div>
-            <input
+              id="settings-reminder-time"
               type="time"
-              value={settings.dailyReminder || '20:30'}
-              onChange={(e) => handleChange('dailyReminder', e.target.value)}
-              className="p-2 rounded-xl border border-bloom-border bg-white text-xs font-semibold"
-            />
-          </div>
-
-          <div className="flex items-center justify-between p-3 rounded-2xl bg-cream-50 border border-bloom-border">
-            <div>
-              <p className="text-xs font-bold text-bloom-dark">Weekly AI Reflection Report</p>
-              <p className="text-[11px] text-bloom-muted">Receive a weekly summary with encouragement</p>
-            </div>
-            <input
-              type="checkbox"
-              checked={settings.weeklyReport ?? true}
-              onChange={(e) => handleChange('weeklyReport', e.target.checked)}
-              className="w-5 h-5 rounded-lg accent-sage-700 cursor-pointer"
+              value={settings.reminderTime}
+              onChange={updateField('reminderTime')}
+              disabled={loading || saving || !accountLoaded}
+              className="w-full rounded-xl border border-bloom-border bg-white px-3.5 py-3 text-sm text-bloom-dark focus:outline-none focus:ring-2 focus:ring-sage-300 disabled:opacity-60"
             />
           </div>
         </Card>
-
-        {/* Save Bar */}
-        <div className="flex items-center justify-between pt-2">
-          <Button type="submit" variant="primary" size="md" icon={saved ? Check : Sparkles}>
-            {saved ? 'Preferences Saved!' : 'Save Changes'}
-          </Button>
-
-          <Button variant="ghost" size="sm" onClick={logout} icon={LogOut} className="text-rose-600">
-            Log Out of Account
-          </Button>
-        </div>
       </form>
+
+      <Card padding="p-5 sm:p-6">
+        <h2 className="text-base font-bold font-display text-bloom-dark">Appearance</h2>
+        <p className="mt-1 text-sm text-bloom-muted">Choose the color theme for this browser.</p>
+        <button
+          type="button"
+          onClick={toggleTheme}
+          aria-pressed={darkMode}
+          className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-xl border border-bloom-border bg-white px-3.5 py-2 text-sm font-medium text-bloom-dark transition hover:bg-cream-100"
+        >
+          {darkMode
+            ? <Sun className="h-4 w-4" aria-hidden="true" />
+            : <Moon className="h-4 w-4" aria-hidden="true" />}
+          Use {darkMode ? 'light' : 'dark'} theme
+        </button>
+      </Card>
+
+      <div className="flex flex-col-reverse items-stretch justify-between gap-3 sm:flex-row sm:items-center">
+        <Button type="button" variant="ghost" onClick={logout} icon={LogOut} className="text-rose-700">
+          Log out
+        </Button>
+        <Button
+          type="submit"
+          form="settings-form"
+          variant="primary"
+          icon={saved ? Check : Save}
+          disabled={loading || saving || !accountLoaded}
+        >
+          {loading ? 'Loading…' : saving ? 'Saving…' : saved ? 'Saved' : 'Save settings'}
+        </Button>
+      </div>
     </div>
   );
 }
