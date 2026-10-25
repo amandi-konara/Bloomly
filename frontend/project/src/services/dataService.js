@@ -7,6 +7,8 @@ const STORAGE_KEYS = {
   SETTINGS: 'bloomly_settings',
 };
 
+const LEGACY_FREQUENCIES = ['Daily', 'Weekdays', '3 days/week', 'Weekends', 'Every night'];
+
 // Seed sample past 7 days of logs if none exist so the charts & habits look alive immediately
 const INITIAL_LOGS = [
   {
@@ -195,6 +197,63 @@ const INITIAL_SETTINGS = {
   accentTheme: 'sage',
 };
 
+function toHabitDateKey(date) {
+  const value = date instanceof Date ? date : new Date(date);
+  if (Number.isNaN(value.getTime())) {
+    throw new Error('A valid completion date is required.');
+  }
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function normalizeCompletionDate(value) {
+  if (typeof value !== 'string') return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : toHabitDateKey(date);
+}
+
+function getRecentHabitDates(date = new Date(), count = 7) {
+  return Array.from({ length: count }, (_, index) => {
+    const day = new Date(date);
+    day.setHours(12, 0, 0, 0);
+    day.setDate(day.getDate() - (count - index - 1));
+    return toHabitDateKey(day);
+  });
+}
+
+function normalizeHabit(habit) {
+  const todayKey = toHabitDateKey(new Date());
+  const legacyHistory = Array.isArray(habit.history) ? habit.history : [];
+  const legacyDates = legacyHistory.flatMap((completed, index) => {
+    if (!completed) return [];
+    const day = new Date();
+    day.setDate(day.getDate() - (legacyHistory.length - index - 1));
+    return [toHabitDateKey(day)];
+  });
+  const hasDatedCompletions = Array.isArray(habit.completionDates);
+  const completionDates = hasDatedCompletions
+    ? habit.completionDates.map(normalizeCompletionDate).filter(Boolean)
+    : legacyDates;
+  if (!hasDatedCompletions && habit.completedToday && !completionDates.includes(todayKey)) {
+    completionDates.push(todayKey);
+  }
+
+  return {
+    ...habit,
+    id: habit.id || `h-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    category: habit.category || 'Other',
+    target: habit.target || 'Daily',
+    frequency: habit.frequency || (LEGACY_FREQUENCIES.includes(habit.target) ? habit.target : 'Daily'),
+    reminder: habit.reminder || '',
+    archived: Boolean(habit.archived),
+    completionDates: [...new Set(completionDates)],
+    completedToday: completionDates.includes(todayKey),
+  };
+}
+
 export const dataService = {
   // --- Logs ---
   async getLogs() {
@@ -211,7 +270,7 @@ export const dataService = {
     if (cached) {
       try {
         return JSON.parse(cached);
-      } catch (e) {
+      } catch {
         // fallback
       }
     }
@@ -258,13 +317,19 @@ export const dataService = {
     const raw = localStorage.getItem(STORAGE_KEYS.HABITS);
     if (raw) {
       try {
-        return JSON.parse(raw);
-      } catch (e) {
-        // ignore
+        const habits = JSON.parse(raw);
+        if (!Array.isArray(habits)) throw new Error('Saved habits are not a list.');
+        const normalized = habits.map(normalizeHabit);
+        localStorage.setItem(STORAGE_KEYS.HABITS, JSON.stringify(normalized));
+        return normalized;
+      } catch (error) {
+        console.warn('Saved habits could not be read:', error.message);
+        throw error;
       }
     }
-    localStorage.setItem(STORAGE_KEYS.HABITS, JSON.stringify(INITIAL_HABITS));
-    return INITIAL_HABITS;
+    const initialized = INITIAL_HABITS.map(normalizeHabit);
+    localStorage.setItem(STORAGE_KEYS.HABITS, JSON.stringify(initialized));
+    return initialized;
   },
 
   getDashboardHabits() {
@@ -283,18 +348,42 @@ export const dataService = {
     localStorage.setItem(STORAGE_KEYS.HABITS, JSON.stringify(habits));
   },
 
-  toggleHabit(id) {
+  getHabitDateKey(date = new Date()) {
+    return toHabitDateKey(date);
+  },
+
+  getHabitHistory(habit, date = new Date(), count = 7) {
+    const completionDates = new Set((habit.completionDates || []).map(normalizeCompletionDate).filter(Boolean));
+    return getRecentHabitDates(date, count).map((day) => ({
+      date: day,
+      completed: completionDates.has(day),
+    }));
+  },
+
+  toggleHabit(id, date = new Date()) {
+    const dateKey = toHabitDateKey(date);
     const habits = this.getHabits();
     const updated = habits.map((h) => {
       if (h.id === id) {
-        const nextState = !h.completedToday;
+        const completions = new Set(h.completionDates || []);
+        if (completions.has(dateKey)) completions.delete(dateKey);
+        else completions.add(dateKey);
+        const completionDates = [...completions].sort();
+        const todayKey = toHabitDateKey(new Date());
+        let streak = 0;
+        const firstOffset = completions.has(todayKey) ? 0 : 1;
+        for (let offset = firstOffset; offset < firstOffset + 366; offset += 1) {
+          const day = new Date();
+          day.setDate(day.getDate() - offset);
+          if (!completions.has(toHabitDateKey(day))) break;
+          streak += 1;
+        }
         return {
           ...h,
-          completedToday: nextState,
-          streak: nextState ? h.streak + 1 : Math.max(0, h.streak - 1),
-          history: Array.isArray(h.history)
-            ? [...h.history.slice(0, -1), nextState]
-            : [nextState],
+          completedToday: completions.has(todayKey),
+          streak,
+          completionDates,
+          history: getRecentHabitDates().map((day) => completions.has(day)),
         };
       }
       return h;
@@ -305,17 +394,37 @@ export const dataService = {
 
   addHabit(habit) {
     const habits = this.getHabits();
-    const newHabit = {
-      id: 'h-' + Date.now(),
+    const newHabit = normalizeHabit({
+      id: `h-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       streak: 0,
       completedToday: false,
-      history: [false, false, false, false, false, false, false],
+      completionDates: [],
+      archived: false,
       color: 'sage',
+      target: habit.frequency || 'Daily',
       ...habit,
-    };
+    });
     const updated = [newHabit, ...habits];
     this.saveHabits(updated);
     return updated;
+  },
+
+  updateHabit(id, changes) {
+    const updated = this.getHabits().map((habit) => (
+      habit.id === id
+        ? normalizeHabit({ ...habit, ...changes, id: habit.id })
+        : habit
+    ));
+    this.saveHabits(updated);
+    return updated;
+  },
+
+  archiveHabit(id) {
+    return this.updateHabit(id, { archived: true });
+  },
+
+  restoreHabit(id) {
+    return this.updateHabit(id, { archived: false });
   },
 
   deleteHabit(id) {
@@ -330,7 +439,7 @@ export const dataService = {
     if (raw) {
       try {
         return JSON.parse(raw);
-      } catch (e) {
+      } catch {
         // ignore
       }
     }
@@ -381,7 +490,7 @@ export const dataService = {
     if (raw) {
       try {
         return { ...INITIAL_SETTINGS, ...JSON.parse(raw) };
-      } catch (e) {
+      } catch {
         // ignore
       }
     }

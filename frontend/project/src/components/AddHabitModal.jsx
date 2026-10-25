@@ -1,142 +1,159 @@
-import React, { useState } from 'react';
-import { Flower2 } from 'lucide-react';
-import { X, Plus } from './Icons';
+import { useState } from 'react';
+import { Plus, X } from './Icons';
 import Button from './Button';
 import { dataService } from '../services/dataService';
 
-const HABIT_PRESETS = [
-  { title: 'Morning sunlight & breathing', category: 'Mindfulness', icon: 'Sun', color: 'butter' },
-  { title: 'Drink 2L fresh water', category: 'Hydration', icon: 'Droplet', color: 'mint' },
-  { title: 'Read 20 pages of a book', category: 'Focus', icon: 'Book', color: 'sage' },
-  { title: 'Screen curfew at 10 PM', category: 'Rest', icon: 'Moon', color: 'peach' },
-  { title: 'Walk 5,000 steps outdoors', category: 'Movement', icon: 'Activity', color: 'mint' },
-];
+const CATEGORIES = ['Mindfulness', 'Hydration', 'Movement', 'Rest', 'Nutrition', 'Focus', 'Other'];
+const FREQUENCIES = ['Daily', 'Weekdays', '3 days/week', 'Weekends'];
 
-export default function AddHabitModal({ isOpen, onClose, onAdded }) {
-  const [title, setTitle] = useState('');
-  const [category, setCategory] = useState('Mindfulness');
-  const [target, setTarget] = useState('Daily');
-  const [color, setColor] = useState('sage');
+function getInitialForm(habit) {
+  const savedCategory = habit?.category || 'Mindfulness';
+  const category = savedCategory === 'Rest & Sleep'
+    ? 'Rest'
+    : savedCategory === 'Focus & Study'
+      ? 'Focus'
+      : CATEGORIES.includes(savedCategory) ? savedCategory : 'Other';
+
+  return {
+    title: habit?.title || '',
+    category,
+    frequency: habit?.frequency || 'Daily',
+    reminder: habit?.reminder || '',
+  };
+}
+
+export default function AddHabitModal({ isOpen, onClose, onAdded, habit = null }) {
+  const [form, setForm] = useState(() => getInitialForm(habit));
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!title.trim()) return;
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    const title = form.title.trim();
+    if (!title) {
+      setError('Enter a name for this habit.');
+      return;
+    }
 
-    const newHabit = {
-      title: title.trim(),
-      category,
-      target,
-      color,
-    };
-
-    const updated = dataService.addHabit(newHabit);
-    if (onAdded) onAdded(updated);
-    setTitle('');
-    onClose();
+    setSaving(true);
+    setError('');
+    try {
+      const changes = { ...form, title, reminder: form.reminder || '' };
+      const updated = habit
+        ? dataService.updateHabit(habit.id, changes)
+        : dataService.addHabit(changes);
+      onAdded?.(updated);
+      onClose();
+    } catch {
+      setError('This habit could not be saved. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleSelectPreset = (p) => {
-    setTitle(p.title);
-    setCategory(p.category);
-    setColor(p.color);
+  const updateField = (field) => (event) => {
+    setForm((current) => ({ ...current, [field]: event.target.value }));
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-bloom-dark/30 backdrop-blur-sm animate-fade-in">
-      <div className="bg-cream-50 w-full max-w-md rounded-4xl border border-bloom-border shadow-soft-lg overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-5 bg-white border-b border-bloom-border/60">
-          <div className="flex items-center gap-2.5">
-            <span className="w-9 h-9 rounded-2xl bg-mint-100 flex items-center justify-center text-sage-700">
-              <Flower2 className="w-5 h-5" aria-hidden="true" />
-            </span>
-            <h2 className="text-lg font-bold font-display text-bloom-dark">Nurture a New Habit</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-bloom-dark/30 backdrop-blur-sm">
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="habit-form-title"
+        className="w-full max-w-lg overflow-hidden rounded-3xl border border-bloom-border bg-cream-50 shadow-soft-lg"
+      >
+        <header className="flex items-center justify-between border-b border-bloom-border/70 bg-white px-5 py-4 sm:px-6">
+          <div>
+            <h2 id="habit-form-title" className="text-lg font-bold font-display text-bloom-dark">
+              {habit ? 'Edit habit' : 'Add a habit'}
+            </h2>
+            <p className="mt-0.5 text-sm text-bloom-muted">Set the routine and when you want to do it.</p>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="p-1.5 rounded-xl text-bloom-muted hover:text-bloom-dark hover:bg-cream-200/60 transition"
+            aria-label="Close form"
+            className="grid h-9 w-9 place-items-center rounded-xl text-bloom-muted transition hover:bg-cream-200 hover:text-bloom-dark"
           >
-            <X className="w-5 h-5" />
+            <X className="h-4 w-4" aria-hidden="true" />
           </button>
-        </div>
+        </header>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 p-5 sm:p-6">
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-bloom-muted mb-1.5">
-              Habit Name
+            <label htmlFor="habit-title" className="mb-1.5 block text-sm font-semibold text-bloom-dark">
+              Habit name
             </label>
             <input
+              id="habit-title"
               type="text"
               required
-              placeholder="e.g. 15-minute gentle evening yoga"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full p-3.5 rounded-2xl border border-bloom-border bg-white text-bloom-dark text-sm focus:outline-none focus:ring-2 focus:ring-sage-300"
+              maxLength={100}
+              autoFocus
+              value={form.title}
+              onChange={updateField('title')}
+              placeholder="e.g. Take a short walk"
+              className="w-full rounded-xl border border-bloom-border bg-white px-3.5 py-3 text-sm text-bloom-dark focus:outline-none focus:ring-2 focus:ring-sage-300"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-bloom-muted mb-1.5">
+              <label htmlFor="habit-category" className="mb-1.5 block text-sm font-semibold text-bloom-dark">
                 Category
               </label>
               <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full p-3 rounded-2xl border border-bloom-border bg-white text-bloom-dark text-sm focus:outline-none focus:ring-2 focus:ring-sage-300"
+                id="habit-category"
+                value={form.category}
+                onChange={updateField('category')}
+                className="w-full rounded-xl border border-bloom-border bg-white px-3.5 py-3 text-sm text-bloom-dark"
               >
-                <option value="Mindfulness">Mindfulness</option>
-                <option value="Hydration">Hydration</option>
-                <option value="Movement">Movement</option>
-                <option value="Rest">Rest & Sleep</option>
-                <option value="Nutrition">Nutrition</option>
-                <option value="Focus">Focus & Study</option>
+                {CATEGORIES.map((category) => <option key={category}>{category}</option>)}
               </select>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-bloom-muted mb-1.5">
+              <label htmlFor="habit-frequency" className="mb-1.5 block text-sm font-semibold text-bloom-dark">
                 Frequency
               </label>
               <select
-                value={target}
-                onChange={(e) => setTarget(e.target.value)}
-                className="w-full p-3 rounded-2xl border border-bloom-border bg-white text-bloom-dark text-sm focus:outline-none focus:ring-2 focus:ring-sage-300"
+                id="habit-frequency"
+                value={form.frequency}
+                onChange={updateField('frequency')}
+                className="w-full rounded-xl border border-bloom-border bg-white px-3.5 py-3 text-sm text-bloom-dark"
               >
-                <option value="Daily">Daily</option>
-                <option value="5 days/week">5 days / week</option>
-                <option value="3 days/week">3 days / week</option>
-                <option value="Weekends">Weekends only</option>
+                {!FREQUENCIES.includes(form.frequency) && <option>{form.frequency}</option>}
+                {FREQUENCIES.map((frequency) => <option key={frequency}>{frequency}</option>)}
               </select>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-bloom-muted mb-1.5">
-              Quick Ideas
+            <label htmlFor="habit-reminder" className="mb-1.5 block text-sm font-semibold text-bloom-dark">
+              Reminder <span className="font-normal text-bloom-muted">(optional)</span>
             </label>
-            <div className="flex flex-wrap gap-1.5">
-              {HABIT_PRESETS.map((p, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => handleSelectPreset(p)}
-                  className="px-2.5 py-1 text-xs rounded-xl bg-white border border-bloom-border text-bloom-dark hover:bg-sage-100 transition"
-                >
-                  {p.title}
-                </button>
-              ))}
-            </div>
+            <input
+              id="habit-reminder"
+              type="time"
+              value={form.reminder}
+              onChange={updateField('reminder')}
+              className="w-full rounded-xl border border-bloom-border bg-white px-3.5 py-3 text-sm text-bloom-dark"
+            />
           </div>
 
-          <div className="pt-2">
-            <Button type="submit" variant="primary" size="md" className="w-full py-3.5" icon={Plus}>
-              Plant This Habit
+          {error && <p role="alert" className="text-sm text-rose-700">{error}</p>}
+
+          <footer className="flex justify-end gap-2 border-t border-bloom-border/70 pt-4">
+            <Button variant="outline" onClick={onClose} disabled={saving}>Cancel</Button>
+            <Button type="submit" variant="primary" disabled={saving} icon={habit ? undefined : Plus}>
+              {saving ? 'Saving…' : habit ? 'Save changes' : 'Add habit'}
             </Button>
-          </div>
+          </footer>
         </form>
-      </div>
+      </section>
     </div>
   );
 }
