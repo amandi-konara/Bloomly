@@ -287,6 +287,29 @@ export const dataService = {
     return res.data;
   },
 
+  async getJournalEntries() {
+    const res = await api.get('/logs');
+    if (!Array.isArray(res.data)) {
+      throw new Error('The journal response was not a list.');
+    }
+    return res.data;
+  },
+
+  async createJournalEntry(entry) {
+    const res = await api.post('/logs', entry);
+    return res.data;
+  },
+
+  async updateJournalEntry(id, entry) {
+    const res = await api.put(`/logs/${encodeURIComponent(id)}`, entry);
+    return res.data;
+  },
+
+  async deleteJournalEntry(id) {
+    const res = await api.delete(`/logs/${encodeURIComponent(id)}`);
+    return res.data;
+  },
+
   async addLog(logData) {
     let savedLog = null;
     try {

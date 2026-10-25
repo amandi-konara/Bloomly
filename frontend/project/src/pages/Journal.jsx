@@ -1,216 +1,414 @@
-import React, { useState, useEffect } from 'react';
-import { Flower2 } from 'lucide-react';
-import { Sparkles, BookOpen, Clock, Heart, Search } from '../components/Icons';
-import Card from '../components/Card';
+import { useEffect, useMemo, useState } from 'react';
+import { CalendarDays, Heart, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
 import Button from '../components/Button';
-import Badge from '../components/Badge';
-import MoodBadge, { MOOD_CONFIG } from '../components/MoodBadge';
-import DailyCheckInModal from '../components/DailyCheckInModal';
+import Card from '../components/Card';
 import { dataService } from '../services/dataService';
-import journalCharacter from '../assets/journal-character.png';
+
+const MOODS = [
+  { value: 'sunny', label: 'Great' },
+  { value: 'blooming', label: 'Good' },
+  { value: 'seedling', label: 'Okay' },
+  { value: 'wilting', label: 'Low' },
+  { value: 'stormy', label: 'Stressed' },
+];
+
+const SELF_CARE = [
+  { key: 'meal', label: 'Nourishing meal' },
+  { key: 'stretch', label: 'Movement' },
+  { key: 'screenBreak', label: 'Screen break' },
+  { key: 'friend', label: 'Connected with someone' },
+  { key: 'water', label: 'Hydration' },
+  { key: 'nature', label: 'Time outside' },
+];
+
+const EMPTY_FORM = {
+  date: getLocalDateKey(new Date()),
+  mood: 'seedling',
+  energyLevel: 3,
+  notes: '',
+  selfCare: {},
+};
+
+function getLocalDateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getEntryDateKey(value) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '' : getLocalDateKey(date);
+}
+
+function getMoodLabel(value) {
+  return MOODS.find((mood) => mood.value === value)?.label || value || 'Okay';
+}
+
+function formatDate(value) {
+  return new Date(value).toLocaleDateString(undefined, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+function getErrorMessage(error, fallback) {
+  return error.response?.data?.error || error.message || fallback;
+}
 
 export default function Journal() {
-  const [logs, setLogs] = useState(() => {
-    const cached = localStorage.getItem('bloomly_logs');
-    if (cached) {
-      try { return JSON.parse(cached); } catch (e) {}
-    }
-    return [
-      { _id: '1', date: new Date(Date.now() - 5 * 86400000).toISOString(), mood: 'sunny', energyLevel: 5, studyHours: 5, littleWin: 'Walked through campus park with Maya between labs 🌿', selfCare: { meal: true, stretch: true, screenBreak: true, friend: true }, notes: 'Great energy! Hit my study goal without feeling exhausted.' },
-      { _id: '2', date: new Date(Date.now() - 4 * 86400000).toISOString(), mood: 'seedling', energyLevel: 3, studyHours: 3.5, littleWin: 'Watered all my windowsill plants and took a quiet pause 🪴', selfCare: { meal: true, stretch: false, screenBreak: true, friend: false }, notes: 'A bit sleepy in the afternoon, gave myself permission to take a 20-min power nap.' },
-      { _id: '3', date: new Date(Date.now() - 3 * 86400000).toISOString(), mood: 'wilting', energyLevel: 2, studyHours: 2.0, littleWin: 'Baked cinnamon oats and rested when my body asked for it 🥣', selfCare: { meal: true, stretch: true, screenBreak: false, friend: true }, notes: 'Exams approaching, felt a little overwhelmed but stretching really helped.' },
-      { _id: '4', date: new Date(Date.now() - 2 * 86400000).toISOString(), mood: 'seedling', energyLevel: 3, studyHours: 4.0, littleWin: 'Solved a tough algorithm question on first try! ✨', selfCare: { meal: true, stretch: true, screenBreak: true, friend: false }, notes: 'Regained confidence today. Momentum is building slowly and gently.' },
-      { _id: '5', date: new Date(Date.now() - 1 * 86400000).toISOString(), mood: 'blooming', energyLevel: 4, studyHours: 4.5, littleWin: 'Cooked dinner with my roommate and laughed till our cheeks hurt 🍲', selfCare: { meal: true, stretch: true, screenBreak: true, friend: true }, notes: 'Connection is such medicine. Feeling deeply grateful tonight.' },
-    ];
-  });
-  const [search, setSearch] = useState('');
-  const [selectedMood, setSelectedMood] = useState('all');
-  const [isCheckInOpen, setIsCheckInOpen] = useState(false);
+  const [entries, setEntries] = useState([]);
+  const [dateFilter, setDateFilter] = useState('');
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [editingId, setEditingId] = useState(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    loadLogs();
+    let active = true;
+    dataService.getJournalEntries()
+      .then((savedEntries) => {
+        if (active) setEntries(savedEntries);
+      })
+      .catch((loadError) => {
+        if (active) setError(getErrorMessage(loadError, 'Journal entries could not be loaded.'));
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
-  const loadLogs = async () => {
-    const fetched = await dataService.getLogs();
-    setLogs(fetched);
+  const visibleEntries = useMemo(() => (
+    entries
+      .filter((entry) => !dateFilter || getEntryDateKey(entry.date) === dateFilter)
+      .sort((first, second) => new Date(second.date) - new Date(first.date))
+  ), [entries, dateFilter]);
+
+  const openCreateForm = () => {
+    setForm({ ...EMPTY_FORM, date: getLocalDateKey(new Date()) });
+    setEditingId(null);
+    setError('');
+    setIsFormOpen(true);
   };
 
-  const filteredLogs = logs.filter((log) => {
-    const matchesSearch =
-      (log.littleWin || '').toLowerCase().includes(search.toLowerCase()) ||
-      (log.notes || '').toLowerCase().includes(search.toLowerCase());
-    const matchesMood = selectedMood === 'all' || log.mood === selectedMood;
-    return matchesSearch && matchesMood;
-  });
+  const openEditForm = (entry) => {
+    setForm({
+      date: getEntryDateKey(entry.date) || getLocalDateKey(new Date()),
+      mood: MOODS.some((mood) => mood.value === entry.mood) ? entry.mood : 'seedling',
+      energyLevel: Number(entry.energyLevel) || 3,
+      notes: entry.notes || entry.littleWin || '',
+      selfCare: Object.fromEntries(
+        SELF_CARE.map(({ key }) => [key, Boolean(entry.selfCare?.[key])]),
+      ),
+    });
+    setEditingId(entry._id);
+    setError('');
+    setIsFormOpen(true);
+  };
+
+  const closeForm = () => {
+    setIsFormOpen(false);
+    setEditingId(null);
+  };
+
+  const updateField = (field, value) => {
+    setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const toggleSelfCare = (key) => {
+    setForm((current) => ({
+      ...current,
+      selfCare: { ...current.selfCare, [key]: !current.selfCare[key] },
+    }));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setSaving(true);
+    setError('');
+    const entry = {
+      date: new Date(`${form.date}T12:00:00`).toISOString(),
+      mood: form.mood,
+      energyLevel: Number(form.energyLevel),
+      notes: form.notes.trim(),
+      selfCare: Object.fromEntries(SELF_CARE.map(({ key }) => [key, Boolean(form.selfCare[key])])),
+    };
+
+    try {
+      const saved = editingId
+        ? await dataService.updateJournalEntry(editingId, entry)
+        : await dataService.createJournalEntry(entry);
+      setEntries((current) => (
+        editingId
+          ? current.map((item) => (item._id === editingId ? saved : item))
+          : [saved, ...current]
+      ));
+      closeForm();
+    } catch (saveError) {
+      setError(getErrorMessage(saveError, 'This journal entry could not be saved.'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (entry) => {
+    if (!window.confirm(`Delete your journal entry from ${formatDate(entry.date)}? This cannot be undone.`)) return;
+    setError('');
+    try {
+      await dataService.deleteJournalEntry(entry._id);
+      setEntries((current) => current.filter((item) => item._id !== entry._id));
+    } catch (deleteError) {
+      setError(getErrorMessage(deleteError, 'This journal entry could not be deleted.'));
+    }
+  };
 
   return (
-    <div className="space-y-7 animate-fade-in">
-      {/* Hero with Cozy 3D Journal Character */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-peach-100 via-cream-200 to-sage-100 rounded-4xl border border-bloom-border p-6 md:p-8 shadow-soft">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
-          <div className="max-w-lg space-y-2.5">
-            <Badge variant="peach" size="xs">
-              Mindful Reflections
-            </Badge>
-            <h1 className="text-2xl md:text-3xl font-extrabold font-display text-bloom-dark">
-              Wellness Journal & Little Blooms <BookOpen className="inline-block w-5 h-5 ml-1" aria-hidden="true" />
-            </h1>
-            <p className="text-sm text-bloom-muted leading-relaxed">
-              A private, gentle sanctuary to record small moments of gratitude, study progress, and emotional check-ins.
-            </p>
-            <div className="pt-2">
-              <Button
-                variant="primary"
-                size="md"
-                onClick={() => setIsCheckInOpen(true)}
-                icon={Sparkles}
-              >
-                Write Today's Reflection
-              </Button>
-            </div>
-          </div>
-
-          <div className="hidden sm:flex items-center justify-center flex-shrink-0">
-            <div className="w-36 h-36 md:w-44 md:h-44 rounded-3xl overflow-hidden bg-cream-100/90 border border-bloom-border/60 shadow-soft flex items-center justify-center p-1.5 hover:scale-105 transition-transform duration-300">
-              <img
-                src={journalCharacter}
-                alt="Cozy Journaling Companion"
-                className="w-full h-full object-cover rounded-2xl"
-              />
-            </div>
-          </div>
+    <div className="mx-auto max-w-4xl space-y-6 animate-fade-in">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-extrabold font-display text-bloom-dark sm:text-3xl">Wellness Journal</h1>
+          <p className="mt-1 text-sm text-bloom-muted">A quick note on how you’re doing.</p>
         </div>
-      </div>
+        <Button variant="primary" onClick={openCreateForm} icon={Plus}>
+          New entry
+        </Button>
+      </header>
 
-      {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
-        <div className="relative w-full sm:w-72">
-          <input
-            type="text"
-            placeholder="Search reflections & blooms..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 rounded-2xl border border-bloom-border bg-white text-xs text-bloom-dark focus:outline-none focus:ring-2 focus:ring-sage-300"
-          />
-          <Search className="w-4 h-4 text-bloom-muted absolute left-3 top-3" />
-        </div>
+      {error && (
+        <p role="alert" className="rounded-xl border border-peach-200 bg-peach-50 px-4 py-3 text-sm text-rose-800">
+          {error}
+        </p>
+      )}
 
-        <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto">
-          <button
-            onClick={() => setSelectedMood('all')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${
-              selectedMood === 'all'
-                ? 'bg-sage-700 text-white'
-                : 'bg-white border border-bloom-border text-bloom-muted hover:bg-cream-100'
-            }`}
-          >
-            All Vibes
-          </button>
-          {Object.keys(MOOD_CONFIG).map((m) => {
-            const MoodIcon = MOOD_CONFIG[m].icon;
-            return (
+      {isFormOpen && (
+        <Card padding="p-5 sm:p-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-lg font-bold font-display text-bloom-dark">
+                {editingId ? 'Edit entry' : 'How are you today?'}
+              </h2>
               <button
-                key={m}
-                onClick={() => setSelectedMood(m)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap flex items-center gap-1 transition ${
-                  selectedMood === m
-                    ? 'bg-sage-700 text-white'
-                    : 'bg-white border border-bloom-border text-bloom-muted hover:bg-cream-100'
-                }`}
+                type="button"
+                onClick={closeForm}
+                aria-label="Close entry form"
+                className="grid h-9 w-9 place-items-center rounded-xl text-bloom-muted transition hover:bg-cream-200/60 hover:text-bloom-dark"
               >
-                <MoodIcon className="w-3.5 h-3.5" aria-hidden="true" />
-                <span className="capitalize">{m}</span>
+                <X className="h-4 w-4" aria-hidden="true" />
               </button>
-            );
-          })}
-        </div>
-      </div>
+            </div>
 
-      {/* Journal Entries Timeline */}
-      <div className="space-y-4">
-        {filteredLogs.map((log) => {
-          const logDate = new Date(log.date);
-          const dateStr = logDate.toLocaleDateString('en-US', {
-            weekday: 'long',
-            month: 'long',
-            day: 'numeric',
-          });
-
-          return (
-            <Card key={log._id} hover padding="p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-bloom-border/60">
-                <div className="flex items-center gap-3">
-                  <MoodBadge mood={log.mood} />
-                  <span className="text-xs font-bold text-bloom-dark">{dateStr}</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-bloom-muted">
-                  <span className="bg-sage-100 text-sage-800 px-2.5 py-0.5 rounded-full font-medium">
-                    Energy {log.energyLevel}/5
-                  </span>
-                  <span className="bg-peach-100 text-rose-900 px-2.5 py-0.5 rounded-full font-medium">
-                    Study {log.studyHours}h
-                  </span>
-                </div>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div>
+                <label htmlFor="journal-date" className="mb-2 block text-sm font-semibold text-bloom-dark">Date</label>
+                <input
+                  id="journal-date"
+                  type="date"
+                  required
+                  value={form.date}
+                  onChange={(event) => updateField('date', event.target.value)}
+                  className="w-full rounded-xl border border-bloom-border bg-white px-3.5 py-3 text-sm text-bloom-dark"
+                />
               </div>
 
-              {/* Little Bloom */}
-              {log.littleWin && (
-                <div className="mb-3.5 p-3.5 rounded-2xl bg-cream-50 border border-bloom-border/70 flex items-start gap-3">
-                  <Flower2 className="w-5 h-5 flex-shrink-0 text-sage-600" aria-hidden="true" />
-                  <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-sage-800 block">
-                      Today's Little Bloom
-                    </span>
-                    <p className="text-sm font-medium text-bloom-dark mt-0.5">{log.littleWin}</p>
-                  </div>
+              <fieldset>
+                <legend className="mb-2 block text-sm font-semibold text-bloom-dark">Mood</legend>
+                <div className="flex flex-wrap gap-2">
+                  {MOODS.map((mood) => (
+                    <button
+                      key={mood.value}
+                      type="button"
+                      aria-pressed={form.mood === mood.value}
+                      onClick={() => updateField('mood', mood.value)}
+                      className={`min-h-10 rounded-xl border px-3 text-sm font-medium transition ${
+                        form.mood === mood.value
+                          ? 'border-sage-500 bg-sage-100 text-sage-900'
+                          : 'border-bloom-border bg-white text-bloom-muted hover:border-sage-300'
+                      }`}
+                    >
+                      {mood.label}
+                    </button>
+                  ))}
                 </div>
-              )}
+              </fieldset>
+            </div>
 
-              {/* Personal Notes */}
-              {log.notes && (
-                <p className="text-sm text-bloom-muted leading-relaxed pl-1 whitespace-pre-line mb-3">
-                  "{log.notes}"
-                </p>
-              )}
+            <fieldset>
+              <legend className="mb-2 block text-sm font-semibold text-bloom-dark">Energy: {form.energyLevel} of 5</legend>
+              <div className="flex gap-2" role="group" aria-label="Energy rating">
+                {[1, 2, 3, 4, 5].map((rating) => (
+                  <button
+                    key={rating}
+                    type="button"
+                    aria-label={`Energy ${rating} of 5`}
+                    aria-pressed={form.energyLevel === rating}
+                    onClick={() => updateField('energyLevel', rating)}
+                    className={`grid h-10 w-10 place-items-center rounded-xl border text-sm font-semibold transition ${
+                      form.energyLevel === rating
+                        ? 'border-sage-600 bg-sage-700 text-white'
+                        : 'border-bloom-border bg-white text-bloom-muted hover:border-sage-300'
+                    }`}
+                  >
+                    {rating}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
 
-              {/* Self-care tags */}
-              {log.selfCare && (
-                <div className="flex items-center gap-1.5 flex-wrap pt-2">
-                  <span className="text-[11px] font-semibold text-bloom-muted mr-1">Self-care:</span>
-                  {Object.entries(log.selfCare)
-                    .filter(([, v]) => v)
-                    .map(([k]) => (
-                      <span
-                        key={k}
-                        className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-mint-50 border border-mint-200 text-sage-900 capitalize"
-                      >
-                        ✓ {k === 'screenBreak' ? 'screen curfew' : k}
-                      </span>
-                    ))}
-                </div>
-              )}
-            </Card>
-          );
-        })}
+            <div>
+              <label htmlFor="journal-reflection" className="mb-2 block text-sm font-semibold text-bloom-dark">
+                Reflection <span className="font-normal text-bloom-muted">(optional)</span>
+              </label>
+              <textarea
+                id="journal-reflection"
+                rows="2"
+                maxLength="500"
+                value={form.notes}
+                onChange={(event) => updateField('notes', event.target.value)}
+                placeholder="Anything you’d like to remember?"
+                className="w-full resize-y rounded-xl border border-bloom-border bg-white px-3.5 py-3 text-sm text-bloom-dark focus:outline-none focus:ring-2 focus:ring-sage-300"
+              />
+              <p className="mt-1 text-right text-xs text-bloom-muted">{form.notes.length}/500</p>
+            </div>
 
-        {filteredLogs.length === 0 && (
-          <Card className="text-center py-12">
-            <Flower2 className="w-8 h-8 mx-auto mb-2 text-sage-600" aria-hidden="true" />
-            <h3 className="text-base font-bold text-bloom-dark">No entries matching your filter</h3>
-            <p className="text-xs text-bloom-muted mb-4">Start your daily wellness reflection today</p>
-            <Button variant="primary" size="sm" onClick={() => setIsCheckInOpen(true)}>
-              Write Check-in
-            </Button>
-          </Card>
-        )}
+            <fieldset>
+              <legend className="mb-2 block text-sm font-semibold text-bloom-dark">
+                Self-care <span className="font-normal text-bloom-muted">(optional)</span>
+              </legend>
+              <div className="flex flex-wrap gap-2">
+                {SELF_CARE.map(({ key, label }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    aria-pressed={Boolean(form.selfCare[key])}
+                    onClick={() => toggleSelfCare(key)}
+                    className={`min-h-9 rounded-xl border px-3 text-sm transition ${
+                      form.selfCare[key]
+                        ? 'border-sage-400 bg-sage-100 text-sage-900'
+                        : 'border-bloom-border bg-white text-bloom-muted hover:border-sage-300'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+
+            <div className="flex justify-end gap-2 border-t border-bloom-border/70 pt-4">
+              <Button variant="outline" onClick={closeForm} disabled={saving}>Cancel</Button>
+              <Button type="submit" variant="primary" disabled={saving} icon={Save}>
+                {saving ? 'Saving…' : editingId ? 'Save changes' : 'Save entry'}
+              </Button>
+            </div>
+          </form>
+        </Card>
+      )}
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-lg font-bold font-display text-bloom-dark">Your entries</h2>
+        <label className="flex items-center gap-2 text-sm text-bloom-muted">
+          <CalendarDays className="h-4 w-4" aria-hidden="true" />
+          <span className="sr-only">Filter entries by date</span>
+          <input
+            type="date"
+            aria-label="Filter entries by date"
+            value={dateFilter}
+            onChange={(event) => setDateFilter(event.target.value)}
+            className="rounded-xl border border-bloom-border bg-white px-3 py-2 text-sm text-bloom-dark"
+          />
+          {dateFilter && (
+            <button type="button" onClick={() => setDateFilter('')} className="font-medium text-sage-800 hover:underline">
+              Clear
+            </button>
+          )}
+        </label>
       </div>
 
-      <DailyCheckInModal
-        isOpen={isCheckInOpen}
-        onClose={() => setIsCheckInOpen(false)}
-        onSaved={loadLogs}
-      />
+      {loading ? (
+        <Card padding="p-8" className="text-center text-sm text-bloom-muted">Loading your entries…</Card>
+      ) : visibleEntries.length > 0 ? (
+        <ol className="space-y-3">
+          {visibleEntries.map((entry) => {
+            const activities = SELF_CARE.filter(({ key }) => entry.selfCare?.[key]);
+            return (
+              <li key={entry._id}>
+                <Card padding="p-4 sm:p-5">
+                  <article>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-bloom-dark">{formatDate(entry.date)}</p>
+                        <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+                          <span className="rounded-lg bg-sage-100 px-2.5 py-1 font-medium text-sage-900">
+                            {getMoodLabel(entry.mood)}
+                          </span>
+                          <span className="text-bloom-muted">Energy {entry.energyLevel ?? 3}/5</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => openEditForm(entry)}
+                          aria-label={`Edit entry from ${formatDate(entry.date)}`}
+                          className="grid h-9 w-9 place-items-center rounded-xl text-bloom-muted transition hover:bg-cream-200/60 hover:text-bloom-dark"
+                        >
+                          <Pencil className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(entry)}
+                          aria-label={`Delete entry from ${formatDate(entry.date)}`}
+                          className="grid h-9 w-9 place-items-center rounded-xl text-bloom-muted transition hover:bg-peach-100/60 hover:text-rose-700"
+                        >
+                          <Trash2 className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {(entry.notes || entry.littleWin) && (
+                      <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-bloom-muted">
+                        {entry.notes || entry.littleWin}
+                      </p>
+                    )}
+                    {activities.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {activities.map(({ key, label }) => (
+                          <span key={key} className="inline-flex items-center gap-1.5 rounded-lg bg-cream-100 px-2.5 py-1 text-xs text-bloom-muted">
+                            <Heart className="h-3 w-3 text-sage-700" aria-hidden="true" />
+                            {label}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </article>
+                </Card>
+              </li>
+            );
+          })}
+        </ol>
+      ) : (
+        <Card padding="p-8 sm:p-12" className="text-center">
+          <Heart className="mx-auto mb-3 h-7 w-7 text-sage-600" aria-hidden="true" />
+          <h3 className="text-base font-bold text-bloom-dark">
+            {dateFilter ? 'No entries for this date' : 'Your journal is ready'}
+          </h3>
+          <p className="mx-auto mt-1 max-w-sm text-sm text-bloom-muted">
+            {dateFilter
+              ? 'Choose another date or clear the filter to see your entries.'
+              : 'Save a quick mood and energy check-in whenever you like.'}
+          </p>
+          {!dateFilter && !isFormOpen && (
+            <Button variant="primary" size="sm" onClick={openCreateForm} icon={Plus} className="mt-4">
+              New entry
+            </Button>
+          )}
+        </Card>
+      )}
     </div>
   );
 }

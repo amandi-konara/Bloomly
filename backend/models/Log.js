@@ -12,7 +12,10 @@ const logSchema = new mongoose.Schema({
     stretch: { type: Boolean, default: false },
     screenBreak: { type: Boolean, default: false },
     friend: { type: Boolean, default: false },
+    water: { type: Boolean, default: false },
+    nature: { type: Boolean, default: false },
   },
+  notes: { type: String, default: '', maxlength: 500 },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Log', logSchema);
