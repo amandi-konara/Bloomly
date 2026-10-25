@@ -24,19 +24,32 @@ const NAV_ITEMS = [
   { path: '/settings', label: 'Settings', icon: SettingsIcon },
 ];
 
+function getStoredUser() {
+  try {
+    return JSON.parse(localStorage.getItem('user') || '{}');
+  } catch {
+    return {};
+  }
+}
+
 export default function AppLayout({ children }) {
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem('bloomly_theme') === 'dark';
   });
   const [isCheckInOpen, setIsCheckInOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState(getStoredUser);
   const navigate = useNavigate();
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
   }, [darkMode]);
 
-  const user = JSON.parse(localStorage.getItem('user') || '{"name":"Amandi","email":"student@university.edu"}');
+  useEffect(() => {
+    const updateUser = () => setUser(getStoredUser());
+    window.addEventListener('bloomly_account_updated', updateUser);
+    return () => window.removeEventListener('bloomly_account_updated', updateUser);
+  }, []);
 
   const logout = () => {
     localStorage.removeItem('token');
@@ -131,7 +144,7 @@ export default function AppLayout({ children }) {
                   {(user.name || 'A').charAt(0).toUpperCase()}
                 </span>
                 <span className="app-user-copy">
-                  <span className="app-user-name">{user.name || 'Student'}</span>
+                  <span className="app-user-name">{user.name || 'Account'}</span>
                   <span className="app-user-date">{todayFormatted}</span>
                 </span>
                 <button

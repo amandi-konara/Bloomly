@@ -3,19 +3,12 @@ import { Link } from 'react-router-dom';
 import { Check, HeartPulse, RefreshCw, Sprout } from 'lucide-react';
 import Card from '../components/Card';
 import DailyCheckInModal from '../components/DailyCheckInModal';
-import { dataService } from '../services/dataService';
+import { dataService, isHabitScheduledOnDate } from '../services/dataService';
 
 function getGreeting(hour) {
   if (hour < 12) return 'Good morning';
   if (hour < 18) return 'Good afternoon';
   return 'Good evening';
-}
-
-function isScheduledToday(habit, dayOfWeek) {
-  const target = (habit.target || '').toLowerCase();
-  if (target.includes('weekend')) return dayOfWeek === 0 || dayOfWeek === 6;
-  if (target.includes('5 days')) return dayOfWeek > 0 && dayOfWeek < 6;
-  return true;
 }
 
 function getInitialHabitState() {
@@ -29,6 +22,7 @@ function getInitialHabitState() {
 export default function Dashboard() {
   const [habitState, setHabitState] = useState(getInitialHabitState);
   const [logs, setLogs] = useState([]);
+  const [logsLoading, setLogsLoading] = useState(true);
   const [logsError, setLogsError] = useState('');
   const [savingHabitId, setSavingHabitId] = useState(null);
   const [isCheckInOpen, setIsCheckInOpen] = useState(false);
@@ -53,11 +47,14 @@ export default function Dashboard() {
   }, []);
 
   const loadLogs = useCallback(async () => {
+    setLogsLoading(true);
     try {
       setLogs(await dataService.getDashboardLogs());
       setLogsError('');
     } catch {
       setLogsError('Check-in history is unavailable right now.');
+    } finally {
+      setLogsLoading(false);
     }
   }, []);
 
@@ -72,6 +69,8 @@ export default function Dashboard() {
         }
       } catch {
         if (active) setLogsError('Check-in history is unavailable right now.');
+      } finally {
+        if (active) setLogsLoading(false);
       }
     };
     loadInitialLogs();
@@ -95,15 +94,18 @@ export default function Dashboard() {
     month: 'long',
     day: 'numeric',
   });
+  const todayKey = dataService.getHabitDateKey(today);
   const name = user.name?.trim() || 'there';
-  const scheduledHabits = habits.filter((habit) => isScheduledToday(habit, today.getDay()));
+  const scheduledHabits = habits.filter((habit) => isHabitScheduledOnDate(habit, today));
   const completedCount = scheduledHabits.filter((habit) => habit.completedToday).length;
-  const todayLog = logs.find((log) => new Date(log.date).toDateString() === today.toDateString());
+  const todayLog = logs
+    .filter((log) => (log.dateKey || dataService.getHabitDateKey(new Date(log.date))) === todayKey)
+    .sort((first, second) => new Date(second.createdAt || second.date) - new Date(first.createdAt || first.date))[0];
   const handleToggleHabit = (id) => {
     setSavingHabitId(id);
     try {
       setHabitState({
-        items: dataService.toggleHabit(id).filter((habit) => !/^h-[1-5]$/.test(habit.id)),
+        items: dataService.toggleHabit(id),
         error: '',
       });
     } catch {
@@ -120,9 +122,13 @@ export default function Dashboard() {
     if (savedLog) {
       setLogs((current) => [
         savedLog,
-        ...current.filter((log) => new Date(log.date).toDateString() !== new Date(savedLog.date).toDateString()),
+        ...current.filter((log) => (
+          (log.dateKey || dataService.getHabitDateKey(new Date(log.date)))
+          !== (savedLog.dateKey || dataService.getHabitDateKey(new Date(savedLog.date)))
+        )),
       ]);
       setLogsError('');
+      setLogsLoading(false);
     }
   };
 
@@ -160,7 +166,9 @@ export default function Dashboard() {
             </p>
           )}
 
-          {scheduledHabits.length === 0 ? (
+          {habitsError ? (
+            <p className="py-6 text-sm text-bloom-muted">Your habit checklist is unavailable until the saved data can be loaded.</p>
+          ) : scheduledHabits.length === 0 ? (
             <div className="flex flex-col items-center px-4 py-10 text-center">
               <Sprout className="mb-3 h-8 w-8 text-sage-600" aria-hidden="true" />
               <h3 className="text-base font-semibold text-bloom-dark">No habits scheduled today</h3>
@@ -227,7 +235,11 @@ export default function Dashboard() {
               <div className="min-w-0 flex-1">
                 <h2 className="text-sm font-bold text-bloom-dark">Mood & energy</h2>
                 <p className="mt-1 text-xs text-bloom-muted">
-                  {todayLog
+                  {logsLoading
+                    ? 'Loading today’s check-in…'
+                    : logsError
+                      ? logsError
+                      : todayLog
                     ? `Today's check-in is saved: ${todayLog.mood}, energy ${todayLog.energyLevel}/5.`
                     : 'Take a quick moment to check in with yourself.'}
                 </p>

@@ -47,7 +47,7 @@ export default function AddHabitModal({ isOpen, onClose, onAdded, habit = null }
       onAdded?.(updated);
       onClose();
     } catch {
-      setError('This habit could not be saved. Please try again.');
+      setError('This habit could not be saved. Check the details and try again.');
     } finally {
       setSaving(false);
     }
@@ -135,6 +135,7 @@ export default function AddHabitModal({ isOpen, onClose, onAdded, habit = null }
             <label htmlFor="habit-reminder" className="mb-1.5 block text-sm font-semibold text-bloom-dark">
               Reminder <span className="font-normal text-bloom-muted">(optional)</span>
             </label>
+            <p className="mb-1.5 text-xs text-bloom-muted">Saved as a preferred time; Bloomly does not send reminder notifications.</p>
             <input
               id="habit-reminder"
               type="time"

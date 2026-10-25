@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../api';
 import bloomlyLogo from '../assets/bloomly-logo.png';
@@ -7,7 +7,7 @@ import Card from '../components/Card';
 import { Sparkles } from '../components/Icons';
 
 export default function Login() {
-  const [form, setForm] = useState({ email: 'student@university.edu', password: 'password123' });
+  const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -23,17 +23,7 @@ export default function Login() {
       localStorage.setItem('user', JSON.stringify(res.data.user));
       navigate('/dashboard');
     } catch (err) {
-      // If remote backend is unreachable or credentials don't match, provide seamless demo entry
-      if (form.email && form.password) {
-        localStorage.setItem('token', 'demo-jwt-token-' + Date.now());
-        localStorage.setItem(
-          'user',
-          JSON.stringify({ name: 'Amandi', email: form.email, university: 'Faculty of Engineering' })
-        );
-        navigate('/dashboard');
-      } else {
-        setError(err.response?.data?.error || 'Invalid credentials');
-      }
+      setError(err.response?.data?.error || 'Unable to sign in. Check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -58,7 +48,7 @@ export default function Login() {
         <Card padding="p-8" className="border-bloom-border/80 shadow-soft-md">
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 rounded-2xl bg-peach-100 border border-peach-200 text-xs font-semibold text-rose-800 text-center">
+              <div role="alert" className="p-3 rounded-2xl bg-peach-100 border border-peach-200 text-xs font-semibold text-rose-800 text-center">
                 {error}
               </div>
             )}
@@ -70,7 +60,7 @@ export default function Login() {
               <input
                 type="email"
                 required
-                placeholder="you@university.edu"
+                placeholder="you@example.com"
                 className="w-full p-3.5 rounded-2xl border border-bloom-border bg-white text-sm text-bloom-dark focus:outline-none focus:ring-2 focus:ring-sage-300"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}

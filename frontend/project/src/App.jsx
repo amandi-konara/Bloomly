@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppLayout from './components/AppLayout';
 import Dashboard from './pages/Dashboard';
@@ -10,15 +11,21 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 
 function PrivateRoute({ children }) {
-  let token = localStorage.getItem('token');
-  if (!token) {
-    // Graceful onboarding fallback so users can explore immediately
-    token = 'bloomly-student-token';
-    localStorage.setItem('token', token);
-    localStorage.setItem(
-      'user',
-      JSON.stringify({ name: 'Amandi', email: 'amandi@university.edu', university: 'Faculty of Engineering' })
-    );
+  const [authenticated, setAuthenticated] = useState(() => {
+    const token = localStorage.getItem('token');
+    return Boolean(token && !token.startsWith('demo-jwt-token-'));
+  });
+
+  useEffect(() => {
+    const handleAuthExpired = () => setAuthenticated(false);
+    window.addEventListener('bloomly_auth_expired', handleAuthExpired);
+    return () => window.removeEventListener('bloomly_auth_expired', handleAuthExpired);
+  }, []);
+
+  if (!authenticated) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    return <Navigate to="/login" replace />;
   }
   return <AppLayout>{children}</AppLayout>;
 }

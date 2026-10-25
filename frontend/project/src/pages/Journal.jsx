@@ -37,8 +37,17 @@ function getLocalDateKey(date) {
 }
 
 function getEntryDateKey(value) {
+  if (value && typeof value === 'object' && /^\d{4}-\d{2}-\d{2}$/.test(value.dateKey || '')) {
+    return value.dateKey;
+  }
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  if (value && typeof value === 'object') value = value.date;
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? '' : getLocalDateKey(date);
+}
+
+function getEntryDate(entry) {
+  return new Date(`${getEntryDateKey(entry)}T12:00:00`);
 }
 
 function getMonthDays(date) {
@@ -91,6 +100,7 @@ export default function Journal() {
   const [editingId, setEditingId] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const habitError = habitState.error;
@@ -102,7 +112,10 @@ export default function Journal() {
         if (active) setEntries(savedEntries);
       })
       .catch((loadError) => {
-        if (active) setError(getErrorMessage(loadError, 'Journal entries could not be loaded.'));
+        if (active) {
+          setLoadFailed(true);
+          setError(getErrorMessage(loadError, 'Journal entries could not be loaded.'));
+        }
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -112,14 +125,31 @@ export default function Journal() {
     };
   }, []);
 
+  const retryLoadEntries = async () => {
+    setLoading(true);
+    setLoadFailed(false);
+    setError('');
+    try {
+      setEntries(await dataService.getJournalEntries());
+    } catch (loadError) {
+      setLoadFailed(true);
+      setError(getErrorMessage(loadError, 'Journal entries could not be loaded.'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const visibleEntries = useMemo(() => (
     entries
-      .filter((entry) => !dateFilter || getEntryDateKey(entry.date) === dateFilter)
-      .sort((first, second) => new Date(second.date) - new Date(first.date))
+      .filter((entry) => !dateFilter || getEntryDateKey(entry) === dateFilter)
+      .sort((first, second) => (
+        getEntryDate(second) - getEntryDate(first)
+        || new Date(second.createdAt || second.date) - new Date(first.createdAt || first.date)
+      ))
   ), [entries, dateFilter]);
   const calendarDays = useMemo(() => getMonthDays(currentMonth), [currentMonth]);
   const entriesByDate = useMemo(
-    () => new Set(entries.map((entry) => getEntryDateKey(entry.date))),
+    () => new Set(entries.map(getEntryDateKey)),
     [entries],
   );
   const habitDates = useMemo(() => new Set(
@@ -129,11 +159,11 @@ export default function Journal() {
   ), [habits]);
   const completedHabitsOnDate = dateFilter
     ? habits.filter((habit) => (habit.completionDates || []).some((date) => (
-      ( /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : getEntryDateKey(date)) === dateFilter
+      (/^\d{4}-\d{2}-\d{2}$/.test(date) ? date : getEntryDateKey(date)) === dateFilter
     )))
     : [];
   const entriesOnDate = dateFilter
-    ? entries.filter((entry) => getEntryDateKey(entry.date) === dateFilter)
+    ? entries.filter((entry) => getEntryDateKey(entry) === dateFilter)
     : [];
 
   const openCreateForm = () => {
@@ -145,7 +175,7 @@ export default function Journal() {
 
   const openEditForm = (entry) => {
     setForm({
-      date: getEntryDateKey(entry.date) || getLocalDateKey(new Date()),
+      date: getEntryDateKey(entry) || getLocalDateKey(new Date()),
       mood: MOODS.some((mood) => mood.value === entry.mood) ? entry.mood : 'seedling',
       energyLevel: Number(entry.energyLevel) || 3,
       notes: entry.notes || entry.littleWin || '',
@@ -189,7 +219,8 @@ export default function Journal() {
     setSaving(true);
     setError('');
     const entry = {
-      date: new Date(`${form.date}T12:00:00`).toISOString(),
+      date: new Date(`${form.date}T12:00:00.000Z`).toISOString(),
+      dateKey: form.date,
       mood: form.mood,
       energyLevel: Number(form.energyLevel),
       notes: form.notes.trim(),
@@ -214,7 +245,7 @@ export default function Journal() {
   };
 
   const handleDelete = async (entry) => {
-    if (!window.confirm(`Delete your journal entry from ${formatDate(entry.date)}? This cannot be undone.`)) return;
+    if (!window.confirm(`Delete your journal entry from ${formatDate(getEntryDate(entry))}? This cannot be undone.`)) return;
     setError('');
     try {
       await dataService.deleteJournalEntry(entry._id);
@@ -239,6 +270,11 @@ export default function Journal() {
       {error && (
         <p role="alert" className="rounded-xl border border-peach-200 bg-peach-50 px-4 py-3 text-sm text-rose-800">
           {error}
+        </p>
+      )}
+      {habitError && (
+        <p role="alert" className="rounded-xl border border-peach-200 bg-peach-50 px-4 py-3 text-sm text-rose-800">
+          Habit completion records are unavailable.
         </p>
       )}
 
@@ -471,7 +507,9 @@ export default function Journal() {
           <div className="mt-3 grid gap-4 sm:grid-cols-2">
             <div>
               <h3 className="text-xs font-semibold text-bloom-muted">Habit completions</h3>
-              {completedHabitsOnDate.length ? (
+              {habitError ? (
+                <p className="mt-2 text-sm text-rose-800">Habit completion records could not be loaded.</p>
+              ) : completedHabitsOnDate.length ? (
                 <ul className="mt-2 space-y-1.5">
                   {completedHabitsOnDate.map((habit) => (
                     <li key={habit.id} className="flex items-center gap-2 text-sm text-bloom-dark">
@@ -487,7 +525,9 @@ export default function Journal() {
             <div>
               <h3 className="text-xs font-semibold text-bloom-muted">Journal entries</h3>
               <p className="mt-2 text-sm text-bloom-muted">
-                {entriesOnDate.length
+                {loadFailed
+                  ? 'Journal entries are unavailable until they load successfully.'
+                  : entriesOnDate.length
                   ? `${entriesOnDate.length} saved ${entriesOnDate.length === 1 ? 'entry' : 'entries'} shown below.`
                   : 'No journal entries saved for this date.'}
               </p>
@@ -509,6 +549,11 @@ export default function Journal() {
 
       {loading ? (
         <Card padding="p-8" className="text-center text-sm text-bloom-muted">Loading your entries…</Card>
+      ) : loadFailed ? (
+        <Card padding="p-8" className="text-center">
+          <p className="text-sm text-bloom-muted">Your journal cannot be shown until your saved entries load.</p>
+          <Button variant="outline" size="sm" onClick={retryLoadEntries} className="mt-3">Try again</Button>
+        </Card>
       ) : visibleEntries.length > 0 ? (
         <ol className="space-y-3">
           {visibleEntries.map((entry) => {
@@ -519,7 +564,7 @@ export default function Journal() {
                   <article>
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold text-bloom-dark">{formatDate(entry.date)}</p>
+                        <p className="text-sm font-semibold text-bloom-dark">{formatDate(getEntryDate(entry))}</p>
                         <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
                           <span className="rounded-lg bg-sage-100 px-2.5 py-1 font-medium text-sage-900">
                             {getMoodLabel(entry.mood)}
@@ -531,7 +576,7 @@ export default function Journal() {
                         <button
                           type="button"
                           onClick={() => openEditForm(entry)}
-                          aria-label={`Edit entry from ${formatDate(entry.date)}`}
+                          aria-label={`Edit entry from ${formatDate(getEntryDate(entry))}`}
                           className="grid h-9 w-9 place-items-center rounded-xl text-bloom-muted transition hover:bg-cream-200/60 hover:text-bloom-dark"
                         >
                           <Pencil className="h-4 w-4" aria-hidden="true" />
@@ -539,7 +584,7 @@ export default function Journal() {
                         <button
                           type="button"
                           onClick={() => handleDelete(entry)}
-                          aria-label={`Delete entry from ${formatDate(entry.date)}`}
+                          aria-label={`Delete entry from ${formatDate(getEntryDate(entry))}`}
                           className="grid h-9 w-9 place-items-center rounded-xl text-bloom-muted transition hover:bg-peach-100/60 hover:text-rose-700"
                         >
                           <Trash2 className="h-4 w-4" aria-hidden="true" />

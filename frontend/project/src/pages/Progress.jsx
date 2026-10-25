@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import Button from '../components/Button';
 import Card from '../components/Card';
-import { dataService } from '../services/dataService';
+import { dataService, isHabitScheduledOnDate } from '../services/dataService';
 
 const MOODS = {
   sunny: 'Great',
@@ -35,17 +35,13 @@ function getSavedDateKey(value) {
 }
 
 function getExpectedCompletions(habit, dates) {
-  const frequency = (habit.frequency || 'Daily').toLowerCase();
-  if (frequency.includes('weekend')) return dates.filter((date) => [0, 6].includes(date.getDay())).length;
-  if (frequency.includes('weekday') || frequency.includes('5 days')) {
-    return dates.filter((date) => date.getDay() > 0 && date.getDay() < 6).length;
-  }
+  const frequency = (habit.frequency || habit.target || 'Daily').toLowerCase();
   if (frequency.includes('3 days')) return 3;
-  return dates.length;
+  return dates.filter((date) => isHabitScheduledOnDate(habit, date)).length;
 }
 
 function getEntryDateKey(entry) {
-  return getSavedDateKey(entry.date);
+  return getSavedDateKey(entry.dateKey || entry.date);
 }
 
 function formatDate(date) {
@@ -118,25 +114,36 @@ export default function Progress() {
     };
   }, []);
 
+  const retryLoadLogs = async () => {
+    setLogsLoading(true);
+    setLogsError('');
+    try {
+      setLogs(await dataService.getDashboardLogs());
+    } catch {
+      setLogsError('Journal trends are unavailable right now.');
+    } finally {
+      setLogsLoading(false);
+    }
+  };
+
   const habitSummaries = useMemo(() => habits
-    .filter((habit) => !habit.archived)
     .map((habit) => {
       const completedDates = new Set(
         (habit.completionDates || []).map(getSavedDateKey).filter(Boolean),
       );
-      const weeklyExpected = getExpectedCompletions(habit, weekDates);
-      const scheduledDates = weekDates.filter((date) => (
-        getExpectedCompletions(habit, [date]) > 0
-      ));
+      const weeklyExpected = habit.archived ? 0 : getExpectedCompletions(habit, weekDates);
+      const scheduledDates = weekDates.filter((date) => isHabitScheduledOnDate(habit, date));
       const weeklyCompleted = habit.frequency?.toLowerCase().includes('3 days')
         ? Math.min(weeklyExpected, weekDateKeys.filter((date) => completedDates.has(date)).length)
         : scheduledDates.filter((date) => completedDates.has(getLocalDateKey(date))).length;
+      const archivedCompletions = weekDateKeys.filter((date) => completedDates.has(date)).length;
 
       return {
         ...habit,
         completedDates,
         weeklyExpected,
         weeklyCompleted,
+        archivedCompletions,
         history: weekDates.map((date) => ({
           date,
           completed: completedDates.has(getLocalDateKey(date)),
@@ -144,7 +151,7 @@ export default function Progress() {
       };
     }), [habits, weekDates, weekDateKeys]);
 
-  const weeklyTotals = habitSummaries.reduce((totals, habit) => ({
+  const weeklyTotals = habitSummaries.filter((habit) => !habit.archived).reduce((totals, habit) => ({
     completed: totals.completed + habit.weeklyCompleted,
     expected: totals.expected + habit.weeklyExpected,
   }), { completed: 0, expected: 0 });
@@ -168,7 +175,10 @@ export default function Progress() {
     const entriesByDate = new Map();
     logs
       .filter((entry) => weekDateKeys.includes(getEntryDateKey(entry)))
-      .sort((first, second) => new Date(first.date) - new Date(second.date))
+      .sort((first, second) => (
+        new Date(first.date) - new Date(second.date)
+        || new Date(first.createdAt || first.date) - new Date(second.createdAt || second.date)
+      ))
       .forEach((entry) => entriesByDate.set(getEntryDateKey(entry), entry));
 
     return [...entriesByDate.entries()]
@@ -245,7 +255,11 @@ export default function Progress() {
           )}
         </div>
 
-        {habitSummaries.length === 0 ? (
+        {habitError ? (
+          <Card padding="p-6">
+            <p className="text-sm text-bloom-muted">Habit progress is unavailable until the saved data can be loaded.</p>
+          </Card>
+        ) : habitSummaries.length === 0 ? (
           <Card padding="p-6">
             <p className="text-sm text-bloom-muted">Add a habit and record completions to see your weekly progress.</p>
           </Card>
@@ -254,7 +268,7 @@ export default function Progress() {
             <Card padding="p-4 sm:p-5">
               <h3 className="mb-3 text-sm font-semibold text-bloom-dark">Completions by day</h3>
               <p className="mb-3 text-xs text-bloom-muted">
-                The weekly rate uses each habit’s expected frequency. The chart shows all recorded completions by date.
+                The weekly rate uses active habits’ scheduled frequency. The chart includes all recorded completions, including archived habits.
               </p>
               <ol className="grid h-56 grid-cols-7 gap-2" aria-label="Seven-day habit completion chart">
                 {dailyCompletions.map(({ dateKey, day, dayLabel, completions }) => (
@@ -286,7 +300,9 @@ export default function Progress() {
                         <div>
                           <p className="text-sm font-semibold text-bloom-dark">{habit.title}</p>
                           <p className="mt-0.5 text-xs text-bloom-muted">
-                            {habit.weeklyCompleted} of {habit.weeklyExpected} expected this week
+                            {habit.archived
+                              ? `Archived · ${habit.archivedCompletions} completion${habit.archivedCompletions === 1 ? '' : 's'} this week`
+                              : `${habit.weeklyCompleted} of ${habit.weeklyExpected} expected this week`}
                           </p>
                         </div>
                         <ol className="flex items-center gap-1.5" aria-label={`Seven-day history for ${habit.title}`}>
@@ -319,13 +335,13 @@ export default function Progress() {
           <h2 id="journal-trends-heading" className="text-lg font-bold font-display text-bloom-dark">Mood and energy</h2>
           <p className="mt-1 text-sm text-bloom-muted">Journal check-ins in the same seven-day period.</p>
         </div>
-        {logsError && (
-          <p role="alert" className="rounded-xl border border-peach-200 bg-peach-50 px-4 py-3 text-sm text-rose-800">
-            {logsError}
-          </p>
-        )}
         {logsLoading ? (
           <Card padding="p-6"><p className="text-sm text-bloom-muted">Loading journal trends…</p></Card>
+        ) : logsError ? (
+          <Card padding="p-5">
+            <p role="alert" className="text-sm text-rose-800">{logsError}</p>
+            <Button variant="outline" size="sm" onClick={retryLoadLogs} className="mt-3">Try again</Button>
+          </Card>
         ) : showJournalTrends ? (
           <Card padding="p-4 sm:p-5">
             <p className="mb-3 text-xs text-bloom-muted">
@@ -430,7 +446,11 @@ export default function Progress() {
           </Card>
         )}
 
-        {goalState.goals.length > 0 ? (
+        {goalState.error ? (
+          <Card padding="p-5">
+            <p className="text-sm text-bloom-muted">Personal goals are unavailable until the saved data can be loaded.</p>
+          </Card>
+        ) : goalState.goals.length > 0 ? (
           <ul className="grid gap-2 sm:grid-cols-2">
             {goalState.goals.map((goal) => (
               <li key={goal.id}>

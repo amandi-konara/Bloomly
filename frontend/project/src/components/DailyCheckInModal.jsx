@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Sparkles, Check, Heart, Utensils, PersonStanding, MonitorOff, MessageCircle, Droplets, TreePine, Sprout, Flower } from 'lucide-react';
+import { X, Sparkles, Check, Utensils, PersonStanding, MonitorOff, MessageCircle, Droplets, TreePine, Sprout, Flower } from 'lucide-react';
 import { MOOD_CONFIG } from './MoodBadge';
 import Button from './Button';
 import { dataService } from '../services/dataService';
@@ -36,6 +36,7 @@ export default function DailyCheckInModal({ isOpen, onClose, onSaved }) {
     nature: false,
   });
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
   const [celebrating, setCelebrating] = useState(false);
 
   if (!isOpen) return null;
@@ -47,23 +48,29 @@ export default function DailyCheckInModal({ isOpen, onClose, onSaved }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
+    setError('');
     const logData = {
       mood,
       energyLevel,
       studyHours: Number(studyHours),
-      littleWin: littleWin.trim() || 'Took mindful care of myself today',
+      littleWin: littleWin.trim(),
       selfCare,
       notes: notes.trim(),
     };
 
-    const saved = await dataService.addLog(logData);
-    setSaving(false);
-    setCelebrating(true);
-    setTimeout(() => {
-      setCelebrating(false);
-      if (onSaved) onSaved(saved);
-      onClose();
-    }, 1200);
+    try {
+      const saved = await dataService.addLog(logData);
+      setCelebrating(true);
+      setTimeout(() => {
+        setCelebrating(false);
+        if (onSaved) onSaved(saved);
+        onClose();
+      }, 1200);
+    } catch (saveError) {
+      setError(saveError.response?.data?.error || 'Your check-in could not be saved. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -216,6 +223,7 @@ export default function DailyCheckInModal({ isOpen, onClose, onSaved }) {
               type="text"
               placeholder="e.g. Sipped my favorite lavender tea, smiled at a puppy..."
               value={littleWin}
+              maxLength={500}
               onChange={(e) => setLittleWin(e.target.value)}
               className="w-full p-3.5 rounded-2xl border border-bloom-border bg-white text-bloom-dark placeholder-bloom-muted/60 focus:outline-none focus:ring-2 focus:ring-sage-300 text-sm shadow-inner-soft"
             />
@@ -230,6 +238,7 @@ export default function DailyCheckInModal({ isOpen, onClose, onSaved }) {
               rows="2"
               placeholder="How are you feeling right now? Any gentle thoughts before resting..."
               value={notes}
+              maxLength={500}
               onChange={(e) => setNotes(e.target.value)}
               className="w-full p-3.5 rounded-2xl border border-bloom-border bg-white text-bloom-dark placeholder-bloom-muted/60 focus:outline-none focus:ring-2 focus:ring-sage-300 text-sm shadow-inner-soft"
             />
@@ -237,6 +246,7 @@ export default function DailyCheckInModal({ isOpen, onClose, onSaved }) {
 
           {/* Action */}
           <div className="pt-2">
+            {error && <p role="alert" className="mb-3 rounded-xl bg-peach-50 px-3 py-2 text-sm text-rose-800">{error}</p>}
             <Button
               type="submit"
               variant="primary"

@@ -5,12 +5,28 @@ const router = express.Router();
 
 const MOODS = ['seedling', 'blooming', 'wilting', 'stormy', 'sunny'];
 const SELF_CARE_KEYS = ['meal', 'stretch', 'screenBreak', 'friend', 'water', 'nature'];
-const EDITABLE_FIELDS = ['date', 'mood', 'energyLevel', 'studyHours', 'littleWin', 'notes', 'selfCare'];
+const EDITABLE_FIELDS = ['date', 'dateKey', 'mood', 'energyLevel', 'studyHours', 'littleWin', 'notes', 'selfCare'];
+
+function isValidDate(value) {
+  if (value instanceof Date) return !Number.isNaN(value.getTime());
+  if (typeof value !== 'string') return false;
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (dateOnly) {
+    const date = new Date(`${value}T00:00:00.000Z`);
+    return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+  }
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)) return false;
+  const date = new Date(value);
+  return !Number.isNaN(date.getTime()) && date.toISOString() === value;
+}
 
 function validateLogFields(fields) {
   if (fields.date !== undefined
-    && (typeof fields.date !== 'string' || Number.isNaN(new Date(fields.date).getTime()))) {
+    && !isValidDate(fields.date)) {
     return 'A valid date is required.';
+  }
+  if (fields.dateKey !== undefined && !isValidDate(fields.dateKey)) {
+    return 'A valid local calendar date is required.';
   }
   if (fields.mood !== undefined && !MOODS.includes(fields.mood)) {
     return 'Choose a valid mood.';
@@ -42,9 +58,14 @@ function validateLogFields(fields) {
 }
 
 router.post('/', auth, async (req, res) => {
+  const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
   const fields = Object.fromEntries(
-    EDITABLE_FIELDS.filter((key) => req.body[key] !== undefined).map((key) => [key, req.body[key]]),
+    EDITABLE_FIELDS.filter((key) => body[key] !== undefined).map((key) => [key, body[key]]),
   );
+  if (fields.mood === undefined || fields.energyLevel === undefined) {
+    return res.status(400).json({ error: 'Mood and energy are required for a journal entry.' });
+  }
+  if (fields.dateKey !== undefined) fields.date = new Date(`${fields.dateKey}T12:00:00.000Z`);
   const error = validateLogFields(fields);
   if (error) return res.status(400).json({ error });
   const log = await Log.create({ ...fields, user: req.userId });
@@ -52,24 +73,33 @@ router.post('/', auth, async (req, res) => {
 });
 
 router.get('/', auth, async (req, res) => {
-  const logs = await Log.find({ user: req.userId }).sort({ date: -1 });
+  const logs = await Log.find({ user: req.userId }).sort({ date: -1, createdAt: -1 });
   res.json(logs);
 });
 
 router.put('/:id', auth, async (req, res) => {
+  const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
   const fields = Object.fromEntries(
-    EDITABLE_FIELDS.filter((key) => req.body[key] !== undefined).map((key) => [key, req.body[key]]),
+    EDITABLE_FIELDS.filter((key) => body[key] !== undefined).map((key) => [key, body[key]]),
   );
   const error = validateLogFields(fields);
   if (error) return res.status(400).json({ error });
   if (Object.keys(fields).length === 0) {
     return res.status(400).json({ error: 'Provide at least one field to update.' });
   }
+  if (fields.dateKey !== undefined) {
+    fields.date = new Date(`${fields.dateKey}T12:00:00.000Z`);
+  } else if (fields.date !== undefined) {
+    fields.dateKey = undefined;
+  }
 
   try {
+    const update = { $set: fields };
+    if (fields.date !== undefined && fields.dateKey === undefined) update.$unset = { dateKey: 1 };
+    if (fields.dateKey === undefined) delete fields.dateKey;
     const log = await Log.findOneAndUpdate(
       { _id: req.params.id, user: req.userId },
-      { $set: fields },
+      update,
       { new: true, runValidators: true },
     );
     if (!log) return res.status(404).json({ error: 'Journal entry not found.' });

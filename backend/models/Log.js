@@ -1,8 +1,9 @@
 const mongoose = require('mongoose');
 
 const logSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   date: { type: Date, default: Date.now },
+  dateKey: { type: String, match: /^\d{4}-\d{2}-\d{2}$/ },
   mood: { type: String, enum: ['seedling', 'blooming', 'wilting', 'stormy', 'sunny'], default: 'seedling' },
   energyLevel: { type: Number, min: 1, max: 5, default: 3 },
   studyHours: { type: Number, default: 0 },

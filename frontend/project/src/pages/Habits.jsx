@@ -147,7 +147,11 @@ export default function Habits() {
         </div>
       </div>
 
-      {visibleHabits.length > 0 ? (
+      {habitState.error ? (
+        <Card padding="p-8" className="text-center">
+          <p className="text-sm text-bloom-muted">Your habits cannot be displayed until the saved data is available.</p>
+        </Card>
+      ) : visibleHabits.length > 0 ? (
         <ul className="grid grid-cols-1 gap-3 xl:grid-cols-2">
           {visibleHabits.map((habit) => {
             const completedToday = Boolean(habit.completionDates?.includes(todayKey) || habit.completedToday);

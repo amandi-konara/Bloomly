@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Check, LogOut, Moon, Save, Sun } from 'lucide-react';
+import { Check, LogOut, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 import Card from '../components/Card';
@@ -16,7 +16,6 @@ export default function Settings() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
-  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('bloomly_theme') === 'dark');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,6 +23,7 @@ export default function Settings() {
     dataService.getAccountSettings()
       .then((account) => {
         if (active) {
+          dataService.syncLocalAccountIdentity(account);
           setSettings({
             name: account.name || '',
             email: account.email || '',
@@ -56,17 +56,12 @@ export default function Settings() {
         email: settings.email.trim(),
         reminderTime: settings.reminderTime,
       });
+      dataService.syncLocalAccountIdentity(account);
       setSettings({
         name: account.name || '',
         email: account.email || '',
         reminderTime: account.reminderTime || '',
       });
-      try {
-        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-        localStorage.setItem('user', JSON.stringify({ ...storedUser, name: account.name, email: account.email }));
-      } catch {
-        localStorage.setItem('user', JSON.stringify({ name: account.name, email: account.email }));
-      }
       setSaved(true);
       window.setTimeout(() => setSaved(false), 2000);
     } catch (saveError) {
@@ -78,13 +73,6 @@ export default function Settings() {
 
   const updateField = (field) => (event) => {
     setSettings((current) => ({ ...current, [field]: event.target.value }));
-  };
-
-  const toggleTheme = () => {
-    const enabled = !darkMode;
-    document.documentElement.classList.toggle('dark', enabled);
-    localStorage.setItem('bloomly_theme', enabled ? 'dark' : 'light');
-    setDarkMode(enabled);
   };
 
   const logout = () => {
@@ -165,18 +153,7 @@ export default function Settings() {
 
       <Card padding="p-5 sm:p-6">
         <h2 className="text-base font-bold font-display text-bloom-dark">Appearance</h2>
-        <p className="mt-1 text-sm text-bloom-muted">Choose the color theme for this browser.</p>
-        <button
-          type="button"
-          onClick={toggleTheme}
-          aria-pressed={darkMode}
-          className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-xl border border-bloom-border bg-white px-3.5 py-2 text-sm font-medium text-bloom-dark transition hover:bg-cream-100"
-        >
-          {darkMode
-            ? <Sun className="h-4 w-4" aria-hidden="true" />
-            : <Moon className="h-4 w-4" aria-hidden="true" />}
-          Use {darkMode ? 'light' : 'dark'} theme
-        </button>
+        <p className="mt-1 text-sm text-bloom-muted">Use the theme toggle in the top bar to switch between light and dark mode.</p>
       </Card>
 
       <div className="flex flex-col-reverse items-stretch justify-between gap-3 sm:flex-row sm:items-center">

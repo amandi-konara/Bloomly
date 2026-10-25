@@ -12,7 +12,6 @@ app.use(express.json());
 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/logs', require('./routes/logs'));
-app.use('/api/ai', require('./routes/ai'));
 
 mongoose.connect(process.env.MONGO_URI, { family: 4 })
   .then(() => console.log('MongoDB connected'))

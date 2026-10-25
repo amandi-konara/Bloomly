@@ -12,7 +12,6 @@ app.use(express.json());
 
 app.use('/api/auth', require('../routes/auth'));
 app.use('/api/logs', require('../routes/logs'));
-app.use('/api/ai', require('../routes/ai'));
 
 let isConnected = false;
 async function connectDB() {

@@ -1,16 +1,13 @@
-# Bloomly 🌸
+# Bloomly
 
-A wellness and study-habit companion for women university students.
+A personal wellness journal and habit tracker with a responsive dashboard, journal, and progress views.
 
-## Problem statement
+## Data and privacy
 
-University life is demanding, and for many women students, wellbeing tracking tools feel clinical, generic, or disconnected from the realities of student life — irregular sleep, exam stress, and fluctuating energy levels rarely get acknowledged in a way that feels supportive rather than like another chore to log. Most existing habit trackers are built around streaks and numbers, with no warmth and no understanding of the student experience.
-
-Bloomly addresses this gap by giving students a gentle, encouraging space to log their mood, energy, study hours, and small wins each day — and an AI companion that turns those logs into personalized, supportive guidance rather than generic advice.
-
-## Solution overview
-
-Bloomly is a full-stack wellness tracker where students log a daily entry — their "vibe" (mood), energy level, study hours, self-care moments, and one small "bloom" (a tiny win or happy moment). The dashboard visualizes streaks, energy/study trends over time, and surfaces an AI-generated set of supportive tips based on the student's recent patterns, framed in warm, growth-oriented language rather than clinical advice.
+- Journal records are stored in MongoDB and every journal API request requires a valid JWT. Reads, updates, and deletes are scoped to the authenticated account.
+- Habits, habit completion dates, and personal goals are stored in browser local storage, partitioned by the signed-in account ID. They are not synchronized to the backend or protected from someone with access to the same browser profile.
+- Previously unscoped browser records are left untouched and are not automatically assigned to an account; migrating them requires confirming their owner.
+- The application does not send journal data to an AI provider. Reminder times are saved preferences only; the application does not deliver notifications.
 
 ## Technologies used
 
@@ -20,13 +17,7 @@ Bloomly is a full-stack wellness tracker where students log a daily entry — th
 | Backend | Node.js, Express, deployed as Vercel serverless functions |
 | Database | MongoDB Atlas (Mongoose ODM) |
 | Auth | JWT (jsonwebtoken), bcrypt for password hashing |
-| AI integration | Anthropic API (Claude) for personalized wellness tips |
 | Hosting | Vercel (frontend + backend) |
-
-**Evidence:**
-- `frontend/project/package.json` — react, react-router-dom, recharts, axios, tailwindcss
-- `backend/package.json` — express, mongoose, jsonwebtoken, bcryptjs, cors
-- `backend/routes/ai.js` — direct integration with the Anthropic Messages API
 
 ## Architecture
 
@@ -37,19 +28,18 @@ React frontend (Vercel)
 Express API (Vercel serverless functions)
         │                              │
         ▼                              ▼
-MongoDB Atlas                  Anthropic API
-(users, daily logs)         (generates wellness tips)
+MongoDB Atlas
+(users, journal logs)
 
-  [JWT auth secures all log and tip routes]
+  [JWT auth scopes account and journal endpoints]
 ```
 
 ## Key features
 
-- **Secure signup/login** with hashed passwords and JWT-based session handling
-- **Daily log** — mood ("vibe"), energy level, study hours, self-care checklist, and a "little bloom" gratitude note
-- **Dashboard** — current streak, today's vibe, energy/study trend chart, and a "memory lane" of past little wins
-- **AI-powered tips** — calls the Anthropic API with the student's last 7 days of logs to generate short, warm, supportive guidance
-- **Responsive, mobile-friendly UI** with a soft, encouraging visual design
+- **Signup/login** with password hashing and JWT-based session handling
+- **Journal** — mood, energy, optional reflection, and self-care activities
+- **Habits and progress** — account-partitioned local habit schedules and completion history
+- **Responsive interface** with Dashboard, My Habits, Journal, Progress, and Settings destinations
 
 ## Live deployment
 
@@ -62,7 +52,7 @@ MongoDB Atlas                  Anthropic API
 ```bash
 cd backend
 npm install
-# create .env with MONGO_URI, JWT_SECRET, ANTHROPIC_API_KEY, PORT
+# create .env with MONGO_URI, JWT_SECRET, PORT
 node server.js
 ```
 

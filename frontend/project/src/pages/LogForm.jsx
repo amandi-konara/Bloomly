@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Sparkles, Check, ChevronLeft, Sprout, Utensils, PersonStanding, MonitorOff, MessageCircle, Droplets, TreePine, Flower } from 'lucide-react';
 import Card from '../components/Card';
 import Button from '../components/Button';
-import Badge from '../components/Badge';
 import { MOOD_CONFIG } from '../components/MoodBadge';
 import { dataService } from '../services/dataService';
 import welcomeCharacter from '../assets/welcome-character.png';
@@ -40,6 +39,8 @@ export default function LogForm() {
     nature: false,
   });
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const toggleCare = (key) => {
@@ -48,19 +49,24 @@ export default function LogForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await dataService.addLog({
-      mood,
-      energyLevel,
-      studyHours: Number(studyHours),
-      littleWin: littleWin.trim() || 'Took mindful care of myself today',
-      selfCare,
-      notes: notes.trim(),
-    });
-
-    setSaved(true);
-    setTimeout(() => {
-      navigate('/dashboard');
-    }, 900);
+    setSaving(true);
+    setError('');
+    try {
+      await dataService.addLog({
+        mood,
+        energyLevel,
+        studyHours: Number(studyHours),
+        littleWin: littleWin.trim(),
+        selfCare,
+        notes: notes.trim(),
+      });
+      setSaved(true);
+      setTimeout(() => navigate('/dashboard'), 900);
+    } catch (saveError) {
+      setError(saveError.response?.data?.error || 'Your check-in could not be saved. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -99,6 +105,7 @@ export default function LogForm() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {error && <p role="alert" className="rounded-xl bg-peach-50 px-3 py-2 text-sm text-rose-800">{error}</p>}
           {/* Mood */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-bloom-muted mb-3">
@@ -157,7 +164,7 @@ export default function LogForm() {
             <input
               type="number"
               min="0"
-              max="16"
+              max="24"
               step="0.5"
               value={studyHours}
               onChange={(e) => setStudyHours(Number(e.target.value))}
@@ -201,8 +208,23 @@ export default function LogForm() {
               type="text"
               placeholder="e.g. Completed assignment draft, breathed deeply..."
               value={littleWin}
+              maxLength={500}
               onChange={(e) => setLittleWin(e.target.value)}
               className="w-full p-3.5 rounded-2xl border border-bloom-border bg-white text-bloom-dark placeholder-bloom-muted/60 focus:outline-none focus:ring-2 focus:ring-sage-300 text-sm shadow-inner-soft"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="log-reflection" className="block text-xs font-semibold uppercase tracking-wider text-bloom-muted mb-2">
+              Reflection (Optional)
+            </label>
+            <textarea
+              id="log-reflection"
+              rows="2"
+              maxLength={500}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="w-full p-3.5 rounded-2xl border border-bloom-border bg-white text-bloom-dark focus:outline-none focus:ring-2 focus:ring-sage-300 text-sm"
             />
           </div>
 
@@ -212,10 +234,11 @@ export default function LogForm() {
               type="submit"
               variant="primary"
               size="lg"
+              disabled={saving}
               className="w-full py-4 text-base"
               icon={saved ? Check : Sparkles}
             >
-              {saved ? 'Saved to Your Garden!' : "Save Today's Log"}
+              {saved ? 'Saved to Your Garden!' : saving ? 'Saving…' : "Save Today's Log"}
             </Button>
           </div>
         </form>

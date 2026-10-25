@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../api';
 import bloomlyLogo from '../assets/bloomly-logo.png';
@@ -15,6 +15,14 @@ export default function Signup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    if (!form.name.trim() || form.name.trim().length > 80) {
+      setError('Name must be between 1 and 80 characters.');
+      return;
+    }
+    if (form.password.length < 8 || form.password.length > 72) {
+      setError('Password must be between 8 and 72 characters.');
+      return;
+    }
     setLoading(true);
 
     try {
@@ -23,16 +31,7 @@ export default function Signup() {
       localStorage.setItem('user', JSON.stringify(res.data.user));
       navigate('/dashboard');
     } catch (err) {
-      if (form.name && form.email && form.password) {
-        localStorage.setItem('token', 'demo-jwt-token-' + Date.now());
-        localStorage.setItem(
-          'user',
-          JSON.stringify({ name: form.name, email: form.email, university: 'Faculty of Engineering' })
-        );
-        navigate('/dashboard');
-      } else {
-        setError(err.response?.data?.error || 'Signup failed');
-      }
+      setError(err.response?.data?.error || 'Unable to create your account. Check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -57,7 +56,7 @@ export default function Signup() {
         <Card padding="p-8" className="border-bloom-border/80 shadow-soft-md">
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 rounded-2xl bg-peach-100 border border-peach-200 text-xs font-semibold text-rose-800 text-center">
+              <div role="alert" className="p-3 rounded-2xl bg-peach-100 border border-peach-200 text-xs font-semibold text-rose-800 text-center">
                 {error}
               </div>
             )}
@@ -69,6 +68,7 @@ export default function Signup() {
               <input
                 type="text"
                 required
+                maxLength={80}
                 placeholder="e.g. Amandi"
                 className="w-full p-3.5 rounded-2xl border border-bloom-border bg-white text-sm text-bloom-dark focus:outline-none focus:ring-2 focus:ring-sage-300"
                 value={form.name}
@@ -83,6 +83,7 @@ export default function Signup() {
               <input
                 type="email"
                 required
+                maxLength={254}
                 placeholder="you@university.edu"
                 className="w-full p-3.5 rounded-2xl border border-bloom-border bg-white text-sm text-bloom-dark focus:outline-none focus:ring-2 focus:ring-sage-300"
                 value={form.email}
@@ -97,6 +98,8 @@ export default function Signup() {
               <input
                 type="password"
                 required
+                minLength={8}
+                maxLength={72}
                 placeholder="Create a secure password"
                 className="w-full p-3.5 rounded-2xl border border-bloom-border bg-white text-sm text-bloom-dark focus:outline-none focus:ring-2 focus:ring-sage-300"
                 value={form.password}
