@@ -2,22 +2,47 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  html.dark {
-    color-scheme: dark;
-    --dark-background: #111a20;
-    --dark-surface: #1a252c;
-    --dark-raised: #222f36;
-    --dark-hover: #2b3b42;
-    --dark-border: #35474d;
-    --dark-text: #e7efec;
-    --dark-muted: #a5b7b3;
-    --dark-sage: #8fbea0;
-  }
+:root {
+  --page-background: #fff9f0;
+  --surface-background: #ffffff;
+  --surface-muted: #fdfbf7;
+  --text-primary: #263d34;
+  --text-muted: #78857d;
+  --border-color: #efe8dc;
+  --accent: #315a48;
+  --accent-soft: #e7f0e4;
+  --radius-control: 0.75rem;
+  --radius-card: 1.25rem;
+  --shadow-card: 0 4px 18px -5px rgba(49, 90, 72, 0.1);
+}
 
+html.dark {
+  color-scheme: dark;
+  --page-background: #111a20;
+  --surface-background: #1a252c;
+  --surface-muted: #222f36;
+  --text-primary: #e7efec;
+  --text-muted: #a5b7b3;
+  --border-color: #35474d;
+  --accent: #8fbea0;
+  --accent-soft: #20362e;
+  --radius-control: 0.75rem;
+  --radius-card: 1.25rem;
+  --shadow-card: 0 6px 20px -8px rgba(0, 0, 0, 0.45);
+  --dark-background: var(--page-background);
+  --dark-surface: #1a252c;
+  --dark-raised: #222f36;
+  --dark-hover: #2b3b42;
+  --dark-border: #35474d;
+  --dark-text: #e7efec;
+  --dark-muted: #a5b7b3;
+  --dark-sage: #8fbea0;
+}
+
+@layer base {
   body {
-    background-color: #FFF9F0;
-    color: #263D34;
+    background-color: var(--page-background);
+    color: var(--text-primary);
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -25,13 +50,507 @@
   }
 
   html.dark body {
-    background-color: var(--dark-background);
-    color: var(--dark-text);
+    background-color: var(--page-background);
+    color: var(--text-primary);
+  }
+}
+
+.app-shell {
+    display: flex;
+    min-height: 100vh;
   }
 
-  h1, h2, h3, h4, .font-display {
-    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+  .app-sidebar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    flex: 0 0 16rem;
+    width: 16rem;
+    height: 100vh;
+    flex-direction: column;
+    gap: 2.25rem;
+    padding: 1.75rem 1.25rem;
+    background: color-mix(in srgb, var(--surface-background) 88%, transparent);
+    border-right: 1px solid var(--border-color);
+    backdrop-filter: blur(16px);
   }
+
+  .app-brand {
+    display: inline-flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.75rem;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .app-brand-mark {
+    display: grid;
+    width: 2.75rem;
+    height: 2.75rem;
+    flex: 0 0 auto;
+    place-items: center;
+    overflow: hidden;
+    padding: 0.125rem;
+    background: var(--surface-muted);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-control);
+  }
+
+  .app-brand-mark img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .app-brand-copy,
+  .app-user-copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+  }
+
+  .app-brand-name {
+    color: var(--accent);
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+  }
+
+  .app-brand-caption {
+    margin-top: 0.2rem;
+    color: var(--text-muted);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    line-height: 1.3;
+  }
+
+  .app-sidebar-nav,
+  .app-mobile-navigation {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+
+  .app-sidebar-nav {
+    flex: 1;
+  }
+
+  .app-nav-link {
+    display: flex;
+    min-height: 2.75rem;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 0.75rem;
+    color: var(--text-muted);
+    border: 1px solid transparent;
+    border-radius: var(--radius-control);
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.25;
+    text-decoration: none;
+    transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease;
+  }
+
+  .app-nav-link:hover {
+    color: var(--text-primary);
+    background: var(--surface-muted);
+  }
+
+  .app-nav-link-active,
+  .app-nav-link-active:hover {
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-color: color-mix(in srgb, var(--accent) 18%, var(--border-color));
+  }
+
+  .app-nav-icon {
+    width: 1.125rem;
+    height: 1.125rem;
+    flex: 0 0 auto;
+  }
+
+  .app-workspace {
+    display: flex;
+    min-width: 0;
+    min-height: 100vh;
+    flex: 1;
+    flex-direction: column;
+  }
+
+  .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: color-mix(in srgb, var(--surface-background) 90%, transparent);
+    border-bottom: 1px solid var(--border-color);
+    backdrop-filter: blur(16px);
+  }
+
+  .app-header-inner {
+    display: flex;
+    width: 100%;
+    max-width: 96rem;
+    min-height: 4.5rem;
+    align-items: center;
+    gap: 1rem;
+    margin: 0 auto;
+    padding: 0.75rem 1.5rem;
+  }
+
+  .app-mobile-brand {
+    display: none;
+  }
+
+  .app-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    margin-left: auto;
+  }
+
+  .app-icon-button {
+    display: inline-grid;
+    width: 2.5rem;
+    height: 2.5rem;
+    flex: 0 0 auto;
+    place-items: center;
+    padding: 0;
+    color: var(--text-primary);
+    background: var(--surface-background);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-control);
+    cursor: pointer;
+    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+  }
+
+  .app-icon-button:hover {
+    background: var(--surface-muted);
+  }
+
+  .app-icon-button svg {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+
+  .app-check-in {
+    display: inline-flex;
+    min-height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.875rem;
+    color: #172b22;
+    background: #a8be9b;
+    border: 1px solid transparent;
+    border-radius: var(--radius-control);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    line-height: 1.25;
+    cursor: pointer;
+    transition: background-color 150ms ease, transform 150ms ease;
+  }
+
+  .app-check-in:hover {
+    background: #8eaa80;
+  }
+
+  .app-check-in:active {
+    transform: translateY(1px);
+  }
+
+  .app-check-in-compact .app-nav-icon {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .app-user-card {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.375rem 0.5rem 0.375rem 0.625rem;
+    background: var(--surface-background);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-control);
+    box-shadow: var(--shadow-card);
+  }
+
+  .app-user-avatar {
+    display: grid;
+    width: 2.25rem;
+    height: 2.25rem;
+    flex: 0 0 auto;
+    place-items: center;
+    color: #6b493f;
+    background: #FADCCE;
+    border: 1px solid #f5c4ad;
+    border-radius: 50%;
+    font-size: 0.8125rem;
+    font-weight: 800;
+  }
+
+  .app-user-name {
+    overflow: hidden;
+    max-width: 10rem;
+    color: var(--text-primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .app-user-date {
+    color: var(--text-muted);
+    font-size: 0.625rem;
+    font-weight: 500;
+    line-height: 1.35;
+  }
+
+  .app-logout-button {
+    width: 2.125rem;
+    height: 2.125rem;
+    border-color: transparent;
+  }
+
+  .app-logout-button:hover,
+  .app-mobile-logout:hover {
+    color: #b94f48;
+    background: #fff3ef;
+  }
+
+  .app-menu-button {
+    display: none;
+  }
+
+  .app-mobile-navigation {
+    display: none;
+  }
+
+  .app-mobile-logout {
+    display: flex;
+    min-height: 2.75rem;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 0.75rem;
+    color: #b94f48;
+    background: transparent;
+    border: 0;
+    border-radius: var(--radius-control);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .app-content {
+    width: 100%;
+    max-width: 88rem;
+    flex: 1;
+    margin: 0 auto;
+    padding: 1.75rem 2rem 2.5rem;
+  }
+
+  .app-content h1 {
+    color: var(--text-primary);
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    font-size: clamp(1.625rem, 2vw, 2rem);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 1.2;
+  }
+
+  .app-content h2 {
+    color: var(--text-primary);
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.125rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.35;
+  }
+
+  .app-content h3 {
+    color: var(--text-primary);
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  .app-card {
+    background-color: var(--surface-background);
+    border-color: var(--border-color);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+  }
+
+  .app-button {
+    border-radius: var(--radius-control);
+    letter-spacing: 0.005em;
+  }
+
+  .app-button-sm {
+    min-height: 2rem;
+  }
+
+  .app-button-md {
+    min-height: 2.5rem;
+  }
+
+  .app-button-lg {
+    min-height: 3rem;
+  }
+
+  .app-button-icon {
+    width: 1rem;
+    height: 1rem;
+    flex: 0 0 auto;
+  }
+
+  .app-content :where(input:not([type='checkbox']):not([type='radio']), select, textarea) {
+    border-color: var(--border-color);
+    border-radius: var(--radius-control);
+    color: var(--text-primary);
+    font: inherit;
+  }
+
+  .app-content :where(input:not([type='checkbox']):not([type='radio']), select, textarea):focus {
+    border-color: #8eaa80;
+    outline: 2px solid color-mix(in srgb, #8eaa80 35%, transparent);
+    outline-offset: 1px;
+  }
+
+  button:focus-visible,
+  a:focus-visible {
+    outline: 2px solid #6b8e5d;
+    outline-offset: 2px;
+  }
+
+  html.dark .app-user-avatar {
+    color: #f2d6cc;
+    background: #3a2d31;
+    border-color: #60444a;
+  }
+
+  html.dark .app-logout-button:hover,
+  html.dark .app-mobile-logout:hover {
+    color: #f0aa9e;
+    background: #3a2d31;
+  }
+
+  html.dark .app-check-in {
+    color: #12251b;
+  }
+
+  @media (max-width: 1023px) {
+    .app-mobile-brand {
+      display: inline-flex;
+    }
+
+    .app-menu-button {
+      display: inline-grid;
+    }
+
+    .app-mobile-navigation {
+      position: sticky;
+      top: 4.5rem;
+      z-index: 25;
+      display: flex;
+      max-height: calc(100vh - 4.5rem);
+      overflow-y: auto;
+      padding: 0.75rem 1.5rem 1rem;
+      background: var(--surface-background);
+      border-bottom: 1px solid var(--border-color);
+      box-shadow: var(--shadow-card);
+    }
+
+  }
+
+  @media (max-width: 639px) {
+    .app-header-inner {
+      min-height: 4rem;
+      gap: 0.5rem;
+      padding: 0.625rem 0.75rem;
+    }
+
+    .app-brand {
+      gap: 0.5rem;
+    }
+
+    .app-brand-mark {
+      width: 2.375rem;
+      height: 2.375rem;
+    }
+
+    .app-brand-name {
+      font-size: 1.0625rem;
+    }
+
+    .app-brand-caption {
+      font-size: 0.625rem;
+    }
+
+    .app-header-actions {
+      gap: 0.375rem;
+    }
+
+    .app-icon-button,
+    .app-check-in {
+      width: 2.25rem;
+      min-height: 2.25rem;
+      height: 2.25rem;
+      padding: 0;
+    }
+
+    .app-check-in-compact {
+      width: auto;
+      padding: 0 0.625rem;
+    }
+
+    .app-user-card {
+      gap: 0.25rem;
+      padding: 0.1875rem;
+      border: 0;
+      box-shadow: none;
+      background: transparent;
+    }
+
+    .app-user-avatar {
+      width: 2.125rem;
+      height: 2.125rem;
+    }
+
+    .app-user-copy {
+      display: flex;
+    }
+
+    .app-user-name {
+      max-width: 5rem;
+    }
+
+    .app-user-date {
+      font-size: 0.5625rem;
+    }
+
+    .app-logout-button {
+      display: none;
+    }
+
+    .app-mobile-navigation {
+      top: 4rem;
+      padding: 0.75rem;
+    }
+
+    .app-content {
+      padding: 1.25rem 1rem 2rem;
+    }
+  }
+
+h1, h2, h3, h4, .font-display {
+  font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
 }
 
 html.dark .bg-white,

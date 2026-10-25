@@ -1,5 +1,3 @@
-import React from 'react';
-
 export default function Button({
   children,
   variant = 'primary',
@@ -11,7 +9,7 @@ export default function Button({
   icon: IconComponent,
   ...props
 }) {
-  const base = 'inline-flex items-center justify-center font-semibold rounded-2xl transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-sage-400 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed select-none';
+  const base = 'app-button inline-flex items-center justify-center font-semibold rounded-2xl transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-sage-400 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed select-none';
 
   const sizes = {
     sm: 'px-3.5 py-1.5 text-xs gap-1.5',
@@ -42,10 +40,10 @@ export default function Button({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`${base} ${sizes[size]} ${variants[variant]} ${className}`}
+      className={`${base} app-button-${size} ${sizes[size]} ${variants[variant]} ${className}`}
       {...props}
     >
-      {IconComponent && <IconComponent className={size === 'sm' ? 'w-4 h-4' : 'w-4 h-4'} />}
+      {IconComponent && <IconComponent className="app-button-icon" aria-hidden="true" />}
       {children}
     </button>
   );

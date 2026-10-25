@@ -60,11 +60,14 @@ export default {
         '2xl': '1rem',
         '3xl': '1.5rem',
         '4xl': '2rem',
+        control: 'var(--radius-control)',
+        card: 'var(--radius-card)',
       },
       boxShadow: {
         'soft': '0 4px 20px -2px rgba(49, 90, 72, 0.05)',
         'soft-md': '0 8px 30px -4px rgba(49, 90, 72, 0.07)',
         'soft-lg': '0 16px 40px -6px rgba(49, 90, 72, 0.09)',
+        card: 'var(--shadow-card)',
         'clay': '0 4px 0 #CADBCE, 0 8px 20px rgba(49, 90, 72, 0.07)',
         'clay-active': '0 1px 0 #CADBCE, 0 2px 6px rgba(49, 90, 72, 0.05)',
       }

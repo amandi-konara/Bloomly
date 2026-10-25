@@ -14,6 +14,7 @@ export {
   Heart,
   LayoutDashboard,
   LogOut,
+  Menu,
   Moon,
   Plus,
   RefreshCw,
