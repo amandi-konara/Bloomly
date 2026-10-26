@@ -23,7 +23,12 @@ export default function Login() {
       localStorage.setItem('user', JSON.stringify(res.data.user));
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.error || 'Unable to sign in. Check your connection and try again.');
+      setError(
+        err.response?.data?.error
+        || (err.code === 'ECONNABORTED'
+          ? 'The login service is taking too long to respond. Please try again shortly.'
+          : 'Unable to reach the login service. Check your connection and try again.'),
+      );
     } finally {
       setLoading(false);
     }
