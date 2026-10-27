@@ -95,7 +95,7 @@ export default function Login() {
                 className="w-full py-4 text-base"
                 icon={Sparkles}
               >
-                {loading ? 'Entering garden...' : 'Log In to Bloomly'}
+                {loading ? 'Welcome back...' : 'Log In to Bloomly'}
               </Button>
             </div>
 
