@@ -354,6 +354,55 @@ html.dark {
     padding: 1.75rem 2rem 2.5rem;
   }
 
+  .dashboard-welcome {
+    color: #172b22;
+    background: #e7f0e4;
+    border: 1px solid #cbe0c8;
+  }
+
+  .dashboard-welcome-date {
+    color: #315a48;
+  }
+
+  .dashboard-welcome-title {
+    color: #172b22;
+  }
+
+  .dashboard-welcome-copy {
+    color: #315a48;
+  }
+
+  .dashboard-welcome-shape-large {
+    background: rgba(107, 142, 93, 0.18);
+  }
+
+  .dashboard-welcome-shape-small {
+    background: rgba(142, 170, 128, 0.2);
+  }
+
+  html.dark .dashboard-welcome {
+    color: #ffffff;
+    background: #172b22;
+    border-color: #315a48;
+  }
+
+  html.dark .dashboard-welcome-date,
+  html.dark .dashboard-welcome-copy {
+    color: #d1e0cd;
+  }
+
+  html.dark .dashboard-welcome-title {
+    color: #ffffff;
+  }
+
+  html.dark .dashboard-welcome-shape-large {
+    background: rgba(107, 142, 93, 0.28);
+  }
+
+  html.dark .dashboard-welcome-shape-small {
+    background: rgba(142, 170, 128, 0.2);
+  }
+
   .app-content h1 {
     color: var(--text-primary);
     font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;

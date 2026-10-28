@@ -5,7 +5,7 @@ const router = express.Router();
 
 const MOODS = ['seedling', 'blooming', 'wilting', 'stormy', 'sunny'];
 const SELF_CARE_KEYS = ['meal', 'stretch', 'screenBreak', 'friend', 'water', 'nature'];
-const EDITABLE_FIELDS = ['date', 'dateKey', 'mood', 'energyLevel', 'studyHours', 'littleWin', 'notes', 'selfCare'];
+const EDITABLE_FIELDS = ['date', 'dateKey', 'mood', 'energyLevel', 'littleWin', 'notes', 'selfCare'];
 
 function isValidDate(value) {
   if (value instanceof Date) return !Number.isNaN(value.getTime());
@@ -34,11 +34,6 @@ function validateLogFields(fields) {
   if (fields.energyLevel !== undefined
     && (!Number.isInteger(fields.energyLevel) || fields.energyLevel < 1 || fields.energyLevel > 5)) {
     return 'Energy must be a whole number from 1 to 5.';
-  }
-  if (fields.studyHours !== undefined
-    && (typeof fields.studyHours !== 'number' || !Number.isFinite(fields.studyHours)
-      || fields.studyHours < 0 || fields.studyHours > 24)) {
-    return 'Study hours must be a number from 0 to 24.';
   }
   if (fields.littleWin !== undefined
     && (typeof fields.littleWin !== 'string' || fields.littleWin.length > 500)) {

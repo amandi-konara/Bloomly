@@ -1,41 +1,51 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, Check, ChevronLeft, Sprout, Utensils, PersonStanding, MonitorOff, MessageCircle, Droplets, TreePine, Flower } from 'lucide-react';
+import {
+  AlertCircle,
+  Check,
+  ChevronLeft,
+  Cloud,
+  Heart,
+  Meh,
+  MessageCircle,
+  MonitorOff,
+  Moon,
+  PersonStanding,
+  Smile,
+  TreePine,
+  Utensils,
+} from 'lucide-react';
 import Card from '../components/Card';
 import Button from '../components/Button';
-import { MOOD_CONFIG } from '../components/MoodBadge';
 import { dataService } from '../services/dataService';
-import welcomeCharacter from '../assets/welcome-character.png';
 
-const ENERGY_LABELS = {
-  1: 'Very Low (Prioritize sleep)',
-  2: 'Low (Gentle pace needed)',
-  3: 'Balanced & Steady',
-  4: 'Vibrant & Focused',
-  5: 'Radiant (Full Bloom!)',
-};
+const MOODS = [
+  { key: 'blooming', label: 'Good', icon: Smile },
+  { key: 'seedling', label: 'Calm', icon: Moon },
+  { key: 'sunny', label: 'Okay', icon: Meh },
+  { key: 'stormy', label: 'Stressed', icon: Cloud },
+  { key: 'wilting', label: 'Low', icon: AlertCircle },
+];
 
 const CARE_ITEMS = [
-  { key: 'meal', label: 'Nourishing Meal', icon: Utensils },
-  { key: 'stretch', label: 'Gentle Stretch', icon: PersonStanding },
-  { key: 'screenBreak', label: 'Screen Curfew', icon: MonitorOff },
-  { key: 'friend', label: 'Connected with Friend', icon: MessageCircle },
-  { key: 'water', label: 'Hydrated Well', icon: Droplets },
-  { key: 'nature', label: 'Fresh Air / Walk', icon: TreePine },
+  { key: 'meal', label: 'Ate well', icon: Utensils },
+  { key: 'stretch', label: 'Moved my body', icon: PersonStanding },
+  { key: 'water', label: 'Rested', icon: Moon },
+  { key: 'friend', label: 'Connected with someone', icon: MessageCircle },
+  { key: 'nature', label: 'Spent time outside', icon: TreePine },
+  { key: 'screenBreak', label: 'Took a screen break', icon: MonitorOff },
 ];
 
 export default function LogForm() {
   const [mood, setMood] = useState('blooming');
-  const [energyLevel, setEnergyLevel] = useState(4);
-  const [studyHours, setStudyHours] = useState(3.5);
-  const [littleWin, setLittleWin] = useState('');
+  const [energyLevel, setEnergyLevel] = useState(3);
   const [notes, setNotes] = useState('');
   const [selfCare, setSelfCare] = useState({
-    meal: true,
-    stretch: true,
+    meal: false,
+    stretch: false,
     screenBreak: false,
-    friend: true,
-    water: true,
+    friend: false,
+    water: false,
     nature: false,
   });
   const [saved, setSaved] = useState(false);
@@ -55,8 +65,6 @@ export default function LogForm() {
       await dataService.addLog({
         mood,
         energyLevel,
-        studyHours: Number(studyHours),
-        littleWin: littleWin.trim(),
         selfCare,
         notes: notes.trim(),
       });
@@ -85,23 +93,17 @@ export default function LogForm() {
       </div>
 
       <Card padding="p-6 md:p-8" className="border-sage-200">
-        <div className="flex items-center justify-between pb-6 mb-6 border-b border-bloom-border">
+        <div className="flex items-center gap-3 pb-6 mb-6 border-b border-bloom-border">
           <div className="flex items-center gap-3">
-            <span className="w-12 h-12 rounded-2xl bg-mint-100 border border-mint-200 flex items-center justify-center shadow-soft">
-              <Sprout className="w-6 h-6 text-sage-700" />
+            <span className="w-10 h-10 rounded-2xl bg-sage-100 flex items-center justify-center">
+              <Heart className="w-5 h-5 text-sage-700" />
             </span>
             <div>
               <h1 className="text-xl md:text-2xl font-bold font-display text-bloom-dark">
-                How is your garden blooming today?
+                Daily Check-in
               </h1>
-              <p className="text-xs text-bloom-muted">Take a mindful pause to record your rhythm</p>
             </div>
           </div>
-          <img
-            src={welcomeCharacter}
-            alt="Companion"
-            className="w-14 h-14 object-contain hidden sm:block"
-          />
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -109,10 +111,10 @@ export default function LogForm() {
           {/* Mood */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-bloom-muted mb-3">
-              1. Pick your current vibe
+              How are you feeling today?
             </label>
             <div className="grid grid-cols-5 gap-2.5">
-              {Object.entries(MOOD_CONFIG).map(([key, config]) => {
+              {MOODS.map(({ key, label, icon: Icon }) => {
                 const isSelected = mood === key;
                 return (
                   <button
@@ -121,12 +123,12 @@ export default function LogForm() {
                     onClick={() => setMood(key)}
                     className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all text-center ${
                       isSelected
-                        ? 'bg-sage-100 border-sage-400 ring-2 ring-sage-300 scale-105 shadow-soft'
-                        : 'bg-white border-bloom-border hover:bg-cream-100'
+                        ? 'bg-sage-100 border-sage-400 text-sage-900'
+                        : 'bg-white border-bloom-border text-bloom-muted hover:bg-cream-100'
                     }`}
                   >
-                    <span className="mb-1">{React.createElement(config.icon, { className: 'w-6 h-6' })}</span>
-                    <span className="text-[11px] font-semibold text-bloom-dark capitalize">{key}</span>
+                    <Icon className="w-5 h-5 mb-1" aria-hidden="true" />
+                    <span className="text-[11px] font-semibold">{label}</span>
                   </button>
                 );
               })}
@@ -137,10 +139,10 @@ export default function LogForm() {
           <div className="bg-cream-50 p-4 rounded-3xl border border-bloom-border">
             <div className="flex justify-between items-center mb-2">
               <label className="text-xs font-semibold uppercase tracking-wider text-bloom-muted">
-                2. Energy Level ({energyLevel}/5)
+                How&apos;s your energy? ({energyLevel}/5)
               </label>
               <span className="text-xs font-bold text-sage-800 bg-white px-2.5 py-0.5 rounded-full border border-sage-200">
-                {ENERGY_LABELS[energyLevel]}
+                {energyLevel <= 2 ? 'Low' : energyLevel === 3 ? 'Okay' : 'High'}
               </span>
             </div>
             <input
@@ -153,29 +155,10 @@ export default function LogForm() {
             />
           </div>
 
-          {/* Study hours */}
-          <div className="bg-cream-50 p-4 rounded-3xl border border-bloom-border">
-            <div className="flex justify-between items-center mb-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-bloom-muted">
-                3. Mindful Study Hours
-              </label>
-              <span className="text-sm font-bold text-bloom-dark">{studyHours} hrs</span>
-            </div>
-            <input
-              type="number"
-              min="0"
-              max="24"
-              step="0.5"
-              value={studyHours}
-              onChange={(e) => setStudyHours(Number(e.target.value))}
-              className="w-full p-3 rounded-2xl border border-bloom-border bg-white text-bloom-dark font-semibold text-center focus:outline-none focus:ring-2 focus:ring-sage-300"
-            />
-          </div>
-
           {/* Self-care moments */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-bloom-muted mb-2.5">
-              4. Self-care moments practiced today
+            <label className="block text-sm font-semibold text-bloom-dark mb-3">
+              What did you do for yourself?
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
               {CARE_ITEMS.map((item) => {
@@ -187,40 +170,27 @@ export default function LogForm() {
                     onClick={() => toggleCare(item.key)}
                     className={`flex items-center gap-2.5 p-3 rounded-2xl border text-left transition ${
                       active
-                        ? 'bg-sage-100 border-sage-300 text-sage-900 shadow-soft'
+                        ? 'bg-sage-100 border-sage-300 text-sage-900'
                         : 'bg-white border-bloom-border text-bloom-muted hover:bg-cream-100'
                     }`}
                   >
-                    <item.icon className="w-5 h-5" />
-                    <span className="text-xs font-medium">{item.label}</span>
+                    <item.icon className="w-5 h-5" aria-hidden="true" />
+                    <span className="text-sm font-medium">{item.label}</span>
+                    {active && <Check className="w-4 h-4 ml-auto" aria-hidden="true" />}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Little Bloom */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-bloom-muted mb-2">
-              5. Today's Little Bloom <Flower className="inline w-4 h-4 text-amber-400" /> (One tiny win or grateful smile)
-            </label>
-            <input
-              type="text"
-              placeholder="e.g. Completed assignment draft, breathed deeply..."
-              value={littleWin}
-              maxLength={500}
-              onChange={(e) => setLittleWin(e.target.value)}
-              className="w-full p-3.5 rounded-2xl border border-bloom-border bg-white text-bloom-dark placeholder-bloom-muted/60 focus:outline-none focus:ring-2 focus:ring-sage-300 text-sm shadow-inner-soft"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="log-reflection" className="block text-xs font-semibold uppercase tracking-wider text-bloom-muted mb-2">
-              Reflection (Optional)
+            <label htmlFor="log-reflection" className="block text-sm font-semibold text-bloom-dark mb-2">
+              Anything you&apos;d like to remember?
             </label>
             <textarea
               id="log-reflection"
               rows="2"
+              placeholder="A small win, a thought, or something on your mind…"
               maxLength={500}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -236,9 +206,9 @@ export default function LogForm() {
               size="lg"
               disabled={saving}
               className="w-full py-4 text-base"
-              icon={saved ? Check : Sparkles}
+              icon={saved ? Check : undefined}
             >
-              {saved ? 'Saved to Your Garden!' : saving ? 'Saving…' : "Save Today's Log"}
+              {saved ? 'Saved' : saving ? 'Saving…' : 'Save check-in'}
             </Button>
           </div>
         </form>

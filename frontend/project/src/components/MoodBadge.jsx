@@ -1,41 +1,41 @@
 import React from 'react';
-import { Sun, Flower, Sprout, CloudRain, Leaf } from 'lucide-react';
+import { AlertCircle, Cloud, Meh, Moon, Smile } from 'lucide-react';
 
 export const MOOD_CONFIG = {
   sunny: {
-    label: 'Sunny & Bright',
-    icon: Sun,
-    color: 'butter',
-    badgeClass: 'bg-butter-100 text-amber-900 border-butter-200',
-    description: 'Feeling radiant, positive, and full of light',
-  },
-  blooming: {
-    label: 'Blooming Joy',
-    icon: Flower,
-    color: 'peach',
-    badgeClass: 'bg-peach-100 text-rose-900 border-peach-200',
-    description: 'Vibrant, open-hearted, and energized',
-  },
-  seedling: {
-    label: 'Gently Growing',
-    icon: Sprout,
+    label: 'Okay',
+    icon: Meh,
     color: 'sage',
     badgeClass: 'bg-sage-100 text-sage-800 border-sage-200',
-    description: 'Grounding, quiet momentum, steady pace',
+    description: 'Feeling okay today',
+  },
+  blooming: {
+    label: 'Good',
+    icon: Smile,
+    color: 'sage',
+    badgeClass: 'bg-sage-100 text-sage-800 border-sage-200',
+    description: 'Feeling good today',
+  },
+  seedling: {
+    label: 'Calm',
+    icon: Moon,
+    color: 'sage',
+    badgeClass: 'bg-sage-100 text-sage-800 border-sage-200',
+    description: 'Feeling calm today',
   },
   wilting: {
-    label: 'Needing Rest',
-    icon: Leaf,
-    color: 'peach',
-    badgeClass: 'bg-peach-100 text-rose-800 border-peach-200',
-    description: 'Tired, low reserves, time to recharge',
-  },
-  stormy: {
-    label: 'Weathering Storm',
-    icon: CloudRain,
+    label: 'Low',
+    icon: AlertCircle,
     color: 'cream',
     badgeClass: 'bg-cream-200 text-bloom-dark border-cream-300',
-    description: 'Heavy, overwhelmed, needing extra kindness',
+    description: 'Feeling low today',
+  },
+  stormy: {
+    label: 'Stressed',
+    icon: Cloud,
+    color: 'cream',
+    badgeClass: 'bg-cream-200 text-bloom-dark border-cream-300',
+    description: 'Feeling stressed today',
   },
 };
 

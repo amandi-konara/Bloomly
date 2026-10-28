@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Check, HeartPulse, RefreshCw, Sprout } from 'lucide-react';
+import { Check, CheckSquare, HeartPulse, RefreshCw, Sprout } from 'lucide-react';
 import Card from '../components/Card';
 import DailyCheckInModal from '../components/DailyCheckInModal';
 import { dataService, isHabitScheduledOnDate } from '../services/dataService';
@@ -133,141 +133,180 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <header className="flex flex-col gap-1">
-        <p className="text-sm font-medium text-bloom-muted">{todayFormatted}</p>
-        <h1 className="text-2xl md:text-3xl font-extrabold font-display text-bloom-dark">
-          {getGreeting(today.getHours())}, {name}
-        </h1>
+    <div className="space-y-5 animate-fade-in">
+      <header className="dashboard-welcome relative overflow-hidden rounded-3xl px-6 py-7 shadow-soft-md sm:px-8 sm:py-8">
+        <div className="dashboard-welcome-shape dashboard-welcome-shape-large pointer-events-none absolute -right-10 -top-20 h-64 w-64 rounded-full" />
+        <div className="dashboard-welcome-shape dashboard-welcome-shape-small pointer-events-none absolute right-20 top-20 h-32 w-32 rounded-full" />
+        <div className="relative max-w-2xl">
+          <p className="dashboard-welcome-date text-sm font-medium">{todayFormatted}</p>
+          <h1 className="dashboard-welcome-title mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
+            {getGreeting(today.getHours())}, {name}
+          </h1>
+          <p className="dashboard-welcome-copy mt-2 text-sm sm:text-base">
+            A gentle reminder to take care of yourself today.
+          </p>
+        </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_18rem] gap-5 items-start">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         <Card padding="p-5 sm:p-6">
-          <div className="flex flex-wrap items-end justify-between gap-3 pb-4 border-b border-bloom-border/70">
+          <div className="flex items-center gap-4">
+            <span className="grid h-14 w-14 flex-shrink-0 place-items-center rounded-2xl bg-sage-100 text-sage-700">
+              <Sprout className="h-7 w-7" aria-hidden="true" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-base font-bold font-display text-bloom-dark">Today&apos;s habits</h2>
+              <p className="mt-1 text-3xl font-extrabold tracking-tight text-bloom-dark">
+                {completedCount} <span className="text-lg font-semibold text-bloom-muted">of {scheduledHabits.length}</span>
+              </p>
+              <p className="text-sm text-bloom-muted">Habits completed</p>
+            </div>
+            <Link
+              to="/habits"
+              className="hidden rounded-xl bg-sage-50 px-3 py-2 text-xs font-semibold text-sage-800 transition hover:bg-sage-100 sm:inline-flex"
+            >
+              Manage habits
+            </Link>
+          </div>
+        </Card>
+
+        <Card padding="p-5 sm:p-6">
+          <div className="flex items-center gap-4">
+            <span className="grid h-14 w-14 flex-shrink-0 place-items-center rounded-2xl bg-peach-100 text-rose-700">
+              <HeartPulse className="h-7 w-7" aria-hidden="true" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-base font-bold font-display text-bloom-dark">Mood &amp; energy</h2>
+              <p className="mt-1 text-3xl font-extrabold tracking-tight text-bloom-dark">
+                {logsLoading || !todayLog ? '—' : `${todayLog.energyLevel}/5`}
+              </p>
+              <p className="text-sm text-bloom-muted">
+                {logsLoading
+                  ? 'Loading today’s check-in…'
+                  : logsError
+                    ? logsError
+                    : todayLog
+                      ? `Today’s check-in is saved: ${todayLog.mood}.`
+                      : 'No check-in saved yet.'}
+              </p>
+              {logsError && (
+                <button
+                  type="button"
+                  onClick={loadLogs}
+                  aria-label="Retry loading check-in history"
+                  className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-sage-800 hover:text-sage-900"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+                  Retry
+                </button>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsCheckInOpen(true)}
+              className="hidden rounded-xl bg-sage-300 px-3 py-2 text-xs font-semibold text-sage-900 transition hover:bg-sage-400 sm:inline-flex"
+            >
+              {todayLog ? 'Update check-in' : 'Check in'}
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsCheckInOpen(true)}
+            className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-sage-100 px-3 py-2 text-xs font-semibold text-sage-900 transition hover:bg-sage-200 sm:hidden"
+          >
+            {todayLog ? 'Update check-in' : 'Check in'}
+          </button>
+        </Card>
+      </div>
+
+      <Card padding="p-5 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-bloom-border/70 pb-4">
+          <div className="flex items-center gap-3">
+            <span className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-2xl bg-sage-100 text-sage-700">
+              <CheckSquare className="h-6 w-6" aria-hidden="true" />
+            </span>
             <div>
-              <h2 className="text-lg font-bold font-display text-bloom-dark">Today's habits</h2>
-              <p className="mt-1 text-sm text-bloom-muted">
+              <h2 className="text-lg font-bold font-display text-bloom-dark">Your daily habits</h2>
+              <p className="mt-0.5 text-sm text-bloom-muted">
                 {scheduledHabits.length
                   ? `${completedCount} of ${scheduledHabits.length} completed`
                   : 'Your daily checklist'}
               </p>
             </div>
+          </div>
+          <Link
+            to="/habits"
+            className="rounded-xl bg-sage-50 px-3 py-2 text-xs font-semibold text-sage-800 transition hover:bg-sage-100"
+          >
+            Manage habits
+          </Link>
+        </div>
+
+        {habitsError && (
+          <p role="alert" className="mt-4 rounded-xl bg-peach-50 px-3 py-2 text-sm text-rose-800">
+            {habitsError}
+          </p>
+        )}
+
+        {habitsError ? (
+          <p className="py-6 text-sm text-bloom-muted">Your habit checklist is unavailable until the saved data can be loaded.</p>
+        ) : scheduledHabits.length === 0 ? (
+          <div className="flex flex-col items-center px-4 py-10 text-center">
+            <Sprout className="mb-3 h-8 w-8 text-sage-600" aria-hidden="true" />
+            <h3 className="text-base font-semibold text-bloom-dark">No habits scheduled today</h3>
+            <p className="mt-1 max-w-sm text-sm text-bloom-muted">
+              Add a routine to your habits list and it will appear here.
+            </p>
             <Link
               to="/habits"
-              className="text-sm font-semibold text-sage-800 hover:text-sage-900 transition"
+              className="mt-4 inline-flex items-center rounded-xl bg-sage-100 px-4 py-2 text-sm font-semibold text-sage-900 transition hover:bg-sage-200"
             >
-              Manage habits
+              Go to habits
             </Link>
           </div>
-
-          {habitsError && (
-            <p role="alert" className="mt-4 rounded-xl bg-peach-50 px-3 py-2 text-sm text-rose-800">
-              {habitsError}
-            </p>
-          )}
-
-          {habitsError ? (
-            <p className="py-6 text-sm text-bloom-muted">Your habit checklist is unavailable until the saved data can be loaded.</p>
-          ) : scheduledHabits.length === 0 ? (
-            <div className="flex flex-col items-center px-4 py-10 text-center">
-              <Sprout className="mb-3 h-8 w-8 text-sage-600" aria-hidden="true" />
-              <h3 className="text-base font-semibold text-bloom-dark">No habits scheduled today</h3>
-              <p className="mt-1 max-w-sm text-sm text-bloom-muted">
-                Add a routine to your habits list and it will appear here.
-              </p>
-              <Link
-                to="/habits"
-                className="mt-4 inline-flex items-center rounded-xl bg-sage-100 px-4 py-2 text-sm font-semibold text-sage-900 transition hover:bg-sage-200"
-              >
-                Go to habits
-              </Link>
-            </div>
-          ) : (
-            <ul className="divide-y divide-bloom-border/70">
-              {scheduledHabits.map((habit) => {
-                const completed = Boolean(habit.completedToday);
-                return (
-                  <li key={habit.id}>
-                    <button
-                      type="button"
-                      onClick={() => handleToggleHabit(habit.id)}
-                      disabled={savingHabitId === habit.id}
-                      aria-pressed={completed}
-                      aria-label={`${completed ? 'Undo completion of' : 'Mark'} ${habit.title}`}
-                      className="group flex w-full items-center gap-3 py-4 text-left transition disabled:cursor-wait disabled:opacity-60"
+        ) : (
+          <ul className="divide-y divide-bloom-border/70">
+            {scheduledHabits.map((habit) => {
+              const completed = Boolean(habit.completedToday);
+              return (
+                <li key={habit.id}>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleHabit(habit.id)}
+                    disabled={savingHabitId === habit.id}
+                    aria-pressed={completed}
+                    aria-label={`${completed ? 'Undo completion of' : 'Mark'} ${habit.title}`}
+                    className="group flex w-full items-center gap-4 py-4 text-left transition disabled:cursor-wait disabled:opacity-60"
+                  >
+                    <span
+                      className={`grid h-9 w-9 flex-shrink-0 place-items-center rounded-full border transition ${
+                        completed
+                          ? 'border-sage-600 bg-sage-700 text-white'
+                          : 'border-bloom-border bg-cream-50 text-transparent group-hover:border-sage-400'
+                      }`}
                     >
-                      <span
-                        className={`grid h-6 w-6 flex-shrink-0 place-items-center rounded-lg border transition ${
-                          completed
-                            ? 'border-sage-600 bg-sage-700 text-white'
-                            : 'border-bloom-border bg-cream-50 text-transparent group-hover:border-sage-400'
-                        }`}
-                      >
-                        <Check className="h-4 w-4 stroke-[2.5]" aria-hidden="true" />
+                      <Check className="h-5 w-5 stroke-[2.5]" aria-hidden="true" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className={`block text-sm font-semibold ${completed ? 'text-bloom-muted line-through' : 'text-bloom-dark'}`}>
+                        {habit.title}
                       </span>
-                      <span className="min-w-0 flex-1">
-                        <span className={`block text-sm font-semibold ${completed ? 'text-bloom-muted line-through' : 'text-bloom-dark'}`}>
-                          {habit.title}
+                      {(habit.target || habit.category) && (
+                        <span className="mt-0.5 block text-xs text-bloom-muted">
+                          {[habit.category, habit.target].filter(Boolean).join(' · ')}
                         </span>
-                        {(habit.target || habit.category) && (
-                          <span className="mt-0.5 block text-xs text-bloom-muted">
-                            {[habit.category, habit.target].filter(Boolean).join(' · ')}
-                          </span>
-                        )}
-                      </span>
-                      <span className="text-xs font-medium text-bloom-muted opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100">
-                        {completed ? 'Undo' : 'Complete'}
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </Card>
-
-        <div>
-          <Card padding="p-5">
-            <div className="flex items-start gap-3">
-              <span className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-xl bg-peach-100 text-rose-700">
-                <HeartPulse className="h-4 w-4" aria-hidden="true" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <h2 className="text-sm font-bold text-bloom-dark">Mood & energy</h2>
-                <p className="mt-1 text-xs text-bloom-muted">
-                  {logsLoading
-                    ? 'Loading today’s check-in…'
-                    : logsError
-                      ? logsError
-                      : todayLog
-                    ? `Today's check-in is saved: ${todayLog.mood}, energy ${todayLog.energyLevel}/5.`
-                    : 'Take a quick moment to check in with yourself.'}
-                </p>
-                {logsError && (
-                  <div className="mt-2 flex items-center gap-2 text-xs text-bloom-muted">
-                    <span>{logsError}</span>
-                    <button
-                      type="button"
-                      onClick={loadLogs}
-                      aria-label="Retry loading check-in history"
-                      className="rounded-lg p-1.5 text-sage-800 hover:bg-cream-100"
-                    >
-                      <RefreshCw className="h-4 w-4" aria-hidden="true" />
-                    </button>
-                  </div>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setIsCheckInOpen(true)}
-                  className="mt-3 inline-flex min-h-9 items-center rounded-xl bg-sage-100 px-3 py-2 text-xs font-semibold text-sage-900 transition hover:bg-sage-200"
-                >
-                  {todayLog ? 'Update check-in' : 'Check in'}
-                </button>
-              </div>
-            </div>
-          </Card>
-        </div>
-      </div>
+                      )}
+                    </span>
+                    <span className="text-xs font-medium text-bloom-muted opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100">
+                      {completed ? 'Undo' : 'Complete'}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Card>
 
       <DailyCheckInModal
         isOpen={isCheckInOpen}
