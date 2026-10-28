@@ -10,7 +10,8 @@ const app = express();
 const corsMiddleware = cors({
   origin: [
     'https://bloomly-frontend.vercel.app',
-    'https://bloomly-delta.vercel.app'
+    'https://bloomly-delta.vercel.app',
+    'http://localhost:5173'
   ],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
