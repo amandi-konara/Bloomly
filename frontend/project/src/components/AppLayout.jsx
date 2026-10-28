@@ -38,6 +38,7 @@ export default function AppLayout({ children }) {
   });
   const [isCheckInOpen, setIsCheckInOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [user, setUser] = useState(getStoredUser);
   const navigate = useNavigate();
 
@@ -49,6 +50,14 @@ export default function AppLayout({ children }) {
     const updateUser = () => setUser(getStoredUser());
     window.addEventListener('bloomly_account_updated', updateUser);
     return () => window.removeEventListener('bloomly_account_updated', updateUser);
+  }, []);
+
+  useEffect(() => {
+    const closeMobileMenu = (event) => {
+      if (event.key === 'Escape') setMobileMenuOpen(false);
+    };
+    window.addEventListener('keydown', closeMobileMenu);
+    return () => window.removeEventListener('keydown', closeMobileMenu);
   }, []);
 
   const logout = () => {
@@ -64,6 +73,14 @@ export default function AppLayout({ children }) {
     setDarkMode(enabled);
   };
 
+  const toggleSidebar = () => {
+    if (window.innerWidth < 1024) {
+      setMobileMenuOpen((open) => !open);
+      return;
+    }
+    setSidebarCollapsed((collapsed) => !collapsed);
+  };
+
   const todayFormatted = new Date().toLocaleDateString('en-US', {
     weekday: 'short',
     month: 'short',
@@ -76,6 +93,7 @@ export default function AppLayout({ children }) {
       <NavLink
         key={item.path}
         to={item.path}
+        title={item.label}
         onClick={() => setMobileMenuOpen(false)}
         className={({ isActive }) =>
           `app-nav-link ${isActive ? 'app-nav-link-active' : ''}`
@@ -89,7 +107,10 @@ export default function AppLayout({ children }) {
 
   return (
     <div className="app-shell min-h-screen bg-cream-100 text-bloom-dark">
-      <aside className="app-sidebar hidden lg:flex">
+      <aside
+        id="app-sidebar"
+        className={`app-sidebar ${sidebarCollapsed ? 'app-sidebar-collapsed' : ''}`}
+      >
         <Link className="app-brand" to="/dashboard" aria-label="Bloomly dashboard">
           <span className="app-brand-mark">
             <img src={bloomlyLogo} alt="" />
@@ -105,9 +126,20 @@ export default function AppLayout({ children }) {
         </nav>
       </aside>
 
-      <div className="app-workspace">
+      <div className={`app-workspace ${sidebarCollapsed ? 'app-workspace-collapsed' : ''}`}>
         <header className="app-header">
           <div className="app-header-inner">
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              aria-label={mobileMenuOpen ? 'Close navigation menu' : sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-expanded={mobileMenuOpen || (window.innerWidth >= 1024 && !sidebarCollapsed)}
+              aria-controls={mobileMenuOpen ? 'app-mobile-navigation' : 'app-sidebar'}
+              className="app-icon-button app-sidebar-toggle"
+            >
+              {mobileMenuOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
+            </button>
+
             <Link className="app-brand app-mobile-brand" to="/dashboard" aria-label="Bloomly dashboard">
               <span className="app-brand-mark">
                 <img src={bloomlyLogo} alt="" />
@@ -158,33 +190,35 @@ export default function AppLayout({ children }) {
                 </button>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen((open) => !open)}
-                aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
-                aria-expanded={mobileMenuOpen}
-                aria-controls="app-mobile-navigation"
-                className="app-icon-button app-menu-button"
-              >
-                {mobileMenuOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
-              </button>
             </div>
           </div>
         </header>
 
         {mobileMenuOpen && (
-          <nav id="app-mobile-navigation" className="app-mobile-navigation" aria-label="Main navigation">
-            {renderNavItems()}
-            <button
-              type="button"
-              onClick={logout}
-              className="app-mobile-logout"
-            >
-              <LogOut className="app-nav-icon" aria-hidden="true" />
-              <span>Log out</span>
-            </button>
-          </nav>
+          <button
+            type="button"
+            className="app-mobile-backdrop"
+            onClick={() => setMobileMenuOpen(false)}
+            aria-label="Close navigation menu"
+          />
         )}
+        <nav
+          id="app-mobile-navigation"
+          className={`app-mobile-navigation ${mobileMenuOpen ? 'app-mobile-navigation-open' : ''}`}
+          aria-label="Main navigation"
+          aria-hidden={!mobileMenuOpen}
+        >
+          {renderNavItems()}
+          <button
+            type="button"
+            onClick={logout}
+            className="app-mobile-logout"
+            tabIndex={mobileMenuOpen ? 0 : -1}
+          >
+            <LogOut className="app-nav-icon" aria-hidden="true" />
+            <span>Log out</span>
+          </button>
+        </nav>
 
         <main className="app-content">
           {children}
