@@ -1,16 +1,34 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, ChevronLeft, ChevronRight, Heart, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
+import {
+  Annoyed,
+  BookOpen,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Frown,
+  Heart,
+  Meh,
+  Pencil,
+  Plus,
+  Save,
+  Smile,
+  SmilePlus,
+  Trash2,
+  X,
+} from 'lucide-react';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import { dataService } from '../services/dataService';
 
 const MOODS = [
-  { value: 'sunny', label: 'Calm' },
-  { value: 'blooming', label: 'Good' },
-  { value: 'seedling', label: 'Okay' },
-  { value: 'wilting', label: 'Low' },
-  { value: 'stormy', label: 'Stressed' },
+  { value: 'blooming', label: 'Good', color: '#79A98A', legendColor: '#B7D8C0', icon: SmilePlus },
+  { value: 'sunny', label: 'Calm', color: '#83B8B0', legendColor: '#B9DEDA', icon: Smile },
+  { value: 'seedling', label: 'Okay', color: '#D5B978', legendColor: '#F0DDA5', icon: Meh },
+  { value: 'stormy', label: 'Stressed', color: '#D99A83', legendColor: '#F0C1B0', icon: Frown },
+  { value: 'wilting', label: 'Low', color: '#A5A0C9', legendColor: '#D0CBE8', icon: Annoyed },
 ];
+
+const MOOD_BY_VALUE = Object.fromEntries(MOODS.map((mood) => [mood.value, mood]));
 
 const SELF_CARE = [
   { key: 'meal', label: 'Nourishing meal' },
@@ -67,6 +85,29 @@ function getMonthDays(date) {
 
 function getMoodLabel(value) {
   return MOODS.find((mood) => mood.value === value)?.label || 'Okay';
+}
+
+function isValidCheckIn(entry) {
+  return Boolean(MOOD_BY_VALUE[entry.mood])
+    && Number.isInteger(Number(entry.energyLevel))
+    && Number(entry.energyLevel) >= 1
+    && Number(entry.energyLevel) <= 5;
+}
+
+function getWeekStart(date) {
+  const start = new Date(date);
+  start.setHours(12, 0, 0, 0);
+  start.setDate(start.getDate() - start.getDay());
+  return start;
+}
+
+function getWeekDates(date) {
+  const start = getWeekStart(date);
+  return Array.from({ length: 7 }, (_, index) => {
+    const day = new Date(start);
+    day.setDate(start.getDate() + index);
+    return getLocalDateKey(day);
+  });
 }
 
 function formatDate(value) {
@@ -152,6 +193,36 @@ export default function Journal() {
     () => new Set(entries.map(getEntryDateKey)),
     [entries],
   );
+  const checkInsByDate = useMemo(() => {
+    const byDate = new Map();
+    entries.forEach((entry) => {
+      if (!isValidCheckIn(entry)) return;
+      const dateKey = getEntryDateKey(entry);
+      const existing = byDate.get(dateKey);
+      if (!existing || new Date(entry.createdAt || entry.date) > new Date(existing.createdAt || existing.date)) {
+        byDate.set(dateKey, entry);
+      }
+    });
+    return byDate;
+  }, [entries]);
+  const selectedDate = useMemo(
+    () => (dateFilter ? new Date(`${dateFilter}T12:00:00`) : new Date()),
+    [dateFilter],
+  );
+  const selectedWeekDates = useMemo(() => getWeekDates(selectedDate), [selectedDate]);
+  const weeklyEntries = useMemo(
+    () => entries.filter((entry) => selectedWeekDates.includes(getEntryDateKey(entry))),
+    [entries, selectedWeekDates],
+  );
+  const weeklyCheckIns = weeklyEntries.filter(isValidCheckIn);
+  const weeklyMoodCounts = MOODS.map((mood) => ({
+    ...mood,
+    count: weeklyCheckIns.filter((entry) => entry.mood === mood.value).length,
+  }));
+  const weeklyEnergyValues = weeklyCheckIns.map((entry) => Number(entry.energyLevel));
+  const averageEnergy = weeklyEnergyValues.length
+    ? (weeklyEnergyValues.reduce((total, value) => total + value, 0) / weeklyEnergyValues.length).toFixed(1)
+    : null;
   const habitDates = useMemo(() => new Set(
     habits.flatMap((habit) => (habit.completionDates || []).map((date) => (
       /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : getEntryDateKey(date)
@@ -457,47 +528,123 @@ export default function Journal() {
             if (!day) return <span key={key} aria-hidden="true" className="min-h-10 sm:min-h-12" />;
             const dateKey = getLocalDateKey(date);
             const hasEntry = entriesByDate.has(dateKey);
+            const checkIn = checkInsByDate.get(dateKey);
+            const mood = checkIn ? MOOD_BY_VALUE[checkIn.mood] : null;
             const hasCompletion = habitDates.has(dateKey);
             const isToday = dateKey === getLocalDateKey(new Date());
+            const MoodIcon = mood?.icon;
             return (
               <button
                 key={key}
                 type="button"
                 onClick={() => selectDate(date)}
                 aria-pressed={dateFilter === dateKey}
-                aria-label={`${date.toLocaleDateString(undefined, { dateStyle: 'full' })}${hasEntry ? ', journal entry saved' : ''}${hasCompletion ? ', habit completion recorded' : ''}`}
+                aria-label={`${date.toLocaleDateString(undefined, { dateStyle: 'full' })}${mood ? `, mood ${mood.label}` : ''}${hasEntry ? ', journal entry saved' : ''}${hasCompletion ? ', habit completion recorded' : ''}`}
                 className={`relative flex min-h-10 flex-col items-center justify-center rounded-xl border text-sm transition sm:min-h-12 ${
                   dateFilter === dateKey
-                    ? 'border-sage-500 bg-sage-100 font-semibold text-sage-900'
+                    ? 'border-sage-800 font-semibold ring-2 ring-sage-700 ring-offset-1'
                     : isToday
-                      ? 'border-sage-300 bg-sage-50 text-sage-900'
-                      : 'border-transparent text-bloom-dark hover:border-bloom-border hover:bg-cream-100'
+                      ? 'border-sage-700 ring-1 ring-sage-500'
+                      : mood
+                        ? 'border-transparent'
+                        : 'border-transparent text-bloom-dark hover:border-bloom-border hover:bg-cream-100'
                 }`}
+                style={mood ? { backgroundColor: mood.color, color: '#172B22' } : undefined}
               >
-                {day}
-                {(hasEntry || hasCompletion) && (
-                  <span className="mt-0.5 flex gap-0.5" aria-hidden="true">
-                    {hasEntry && <span className="h-1 w-1 rounded-full bg-peach-500" />}
-                    {hasCompletion && <span className="h-1 w-1 rounded-full bg-sage-700" />}
+                <span className="leading-none">{day}</span>
+                {MoodIcon && (
+                  <MoodIcon className="mt-1 h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
+                )}
+                {(mood || hasEntry || hasCompletion) && (
+                  <span className="absolute bottom-1 left-1/2 flex -translate-x-1/2 gap-0.5" aria-hidden="true">
+                    {!mood && hasEntry && <BookOpen className="h-2.5 w-2.5 text-bloom-muted" />}
+                    {hasCompletion && <span className="h-1.5 w-1.5 rounded-full bg-sage-700" />}
                   </span>
                 )}
               </button>
             );
           })}
         </div>
-        <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-bloom-muted">
-          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-peach-500" />Journal entry</span>
-          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-sage-700" />Habit completion</span>
-          {dateFilter && (
+        <div className="mt-4 flex flex-col gap-4 border-t border-bloom-border/70 pt-4 sm:flex-row sm:items-end sm:justify-between">
+          {dateFilter ? (
             <button
               type="button"
               onClick={() => setDateFilter('')}
-              className="ml-auto font-medium text-sage-800 hover:underline"
+              className="order-2 self-start text-sm font-medium text-sage-800 hover:underline sm:order-1"
             >
               Clear date
             </button>
-          )}
+          ) : <span aria-hidden="true" />}
+          <div className="order-1 grid w-full grid-cols-2 gap-x-5 gap-y-2 text-sm text-bloom-muted sm:order-2 sm:w-auto sm:grid-cols-3">
+            {MOODS.map((mood) => {
+              const MoodIcon = mood.icon;
+              return (
+                <span key={mood.value} className="inline-flex items-center gap-2 whitespace-nowrap">
+                  <span
+                    className="inline-flex h-6 w-6 items-center justify-center rounded-md"
+                    style={{ backgroundColor: mood.legendColor, color: '#172B22' }}
+                  >
+                    <MoodIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                  </span>
+                  {mood.label}
+                </span>
+              );
+            })}
+            <span className="inline-flex items-center gap-2 whitespace-nowrap">
+              <BookOpen className="h-4 w-4 text-bloom-muted" aria-hidden="true" />
+              Journal entry without mood
+            </span>
+            <span className="inline-flex items-center gap-2 whitespace-nowrap">
+              <span className="h-2 w-2 rounded-full bg-sage-700" aria-hidden="true" />
+              Habit completion
+            </span>
+          </div>
         </div>
+      </Card>
+
+      <Card padding="p-4 sm:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-base font-bold font-display text-bloom-dark">Weekly insights</h2>
+            <p className="mt-0.5 text-xs text-bloom-muted">
+              {formatDate(`${selectedWeekDates[0]}T12:00:00`)} – {formatDate(`${selectedWeekDates[6]}T12:00:00`)}
+            </p>
+          </div>
+          <span className="text-xs text-bloom-muted">Based on saved entries</span>
+        </div>
+        {weeklyEntries.length === 0 ? (
+          <p className="mt-4 rounded-xl bg-cream-100 px-3 py-3 text-sm text-bloom-muted">
+            No journal entries or mood check-ins recorded for this week yet.
+          </p>
+        ) : (
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl border border-bloom-border bg-cream-50 p-4">
+              <p className="text-xs text-bloom-muted">Mood check-ins</p>
+              <p className="mt-1 text-2xl font-bold text-bloom-dark">{weeklyCheckIns.length}</p>
+            </div>
+            <div className="rounded-2xl border border-bloom-border bg-cream-50 p-4">
+              <p className="text-xs text-bloom-muted">Average energy</p>
+              <p className="mt-1 text-2xl font-bold text-bloom-dark">{averageEnergy || '—'}{averageEnergy && <span className="text-sm font-medium text-bloom-muted"> / 5</span>}</p>
+            </div>
+            <div className="rounded-2xl border border-bloom-border bg-cream-50 p-4">
+              <p className="text-xs text-bloom-muted">Journal entries</p>
+              <p className="mt-1 text-2xl font-bold text-bloom-dark">{weeklyEntries.length}</p>
+            </div>
+          </div>
+        )}
+        {weeklyCheckIns.length > 0 && (
+          <div className="mt-4">
+            <p className="text-xs font-semibold text-bloom-muted">Mood distribution</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {weeklyMoodCounts.filter((mood) => mood.count > 0).map((mood) => (
+                <span key={mood.value} className="inline-flex items-center gap-1.5 rounded-lg border border-bloom-border bg-white px-2.5 py-1 text-xs text-bloom-dark">
+                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: mood.color }} />
+                  {mood.label}: {mood.count}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
       </Card>
 
       {dateFilter && (
@@ -505,6 +652,20 @@ export default function Journal() {
           <h2 className="text-sm font-bold text-bloom-dark">{formatDate(`${dateFilter}T12:00:00`)}</h2>
           {habitError && <p role="alert" className="mt-2 text-sm text-rose-700">{habitError}</p>}
           <div className="mt-3 grid gap-4 sm:grid-cols-2">
+            <div>
+              <h3 className="text-xs font-semibold text-bloom-muted">Mood check-in</h3>
+              {checkInsByDate.has(dateFilter) ? (
+                <div className="mt-2 flex items-center gap-2 text-sm text-bloom-dark">
+                  <span
+                    className="h-3 w-3 rounded-full"
+                    style={{ backgroundColor: MOOD_BY_VALUE[checkInsByDate.get(dateFilter).mood].color }}
+                  />
+                  {getMoodLabel(checkInsByDate.get(dateFilter).mood)} · Energy {checkInsByDate.get(dateFilter).energyLevel}/5
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-bloom-muted">No mood check-in saved for this date.</p>
+              )}
+            </div>
             <div>
               <h3 className="text-xs font-semibold text-bloom-muted">Habit completions</h3>
               {habitError ? (
