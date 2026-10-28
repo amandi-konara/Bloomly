@@ -5,7 +5,7 @@ import Card from '../components/Card';
 import { dataService, isHabitScheduledOnDate } from '../services/dataService';
 
 const MOODS = {
-  sunny: 'Great',
+  sunny: 'Calm',
   blooming: 'Good',
   seedling: 'Okay',
   wilting: 'Low',
@@ -185,7 +185,7 @@ export default function Progress() {
       .map(([dateKey, entry]) => ({
         dateKey,
         day: formatDate(new Date(`${dateKey}T12:00:00`)),
-        mood: MOODS[entry.mood] || 'Not recorded',
+        mood: MOODS[entry.mood] || 'Okay',
         energy: Number(entry.energyLevel),
       }))
       .sort((first, second) => first.dateKey.localeCompare(second.dateKey));

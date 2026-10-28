@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Check, CheckSquare, HeartPulse, RefreshCw, Sprout } from 'lucide-react';
 import Card from '../components/Card';
 import DailyCheckInModal from '../components/DailyCheckInModal';
+import { getMoodLabel } from '../components/MoodBadge';
 import { dataService, isHabitScheduledOnDate } from '../services/dataService';
 
 function getGreeting(hour) {
@@ -186,7 +187,7 @@ export default function Dashboard() {
                   : logsError
                     ? logsError
                     : todayLog
-                      ? `Today’s check-in is saved: ${todayLog.mood}.`
+                      ? `Today’s mood: ${getMoodLabel(todayLog.mood)}.`
                       : 'No check-in saved yet.'}
               </p>
               {logsError && (

@@ -21,8 +21,8 @@ import { dataService } from '../services/dataService';
 
 const MOODS = [
   { key: 'blooming', label: 'Good', icon: Smile },
-  { key: 'seedling', label: 'Calm', icon: Moon },
-  { key: 'sunny', label: 'Okay', icon: Meh },
+  { key: 'seedling', label: 'Okay', icon: Moon },
+  { key: 'sunny', label: 'Calm', icon: Meh },
   { key: 'stormy', label: 'Stressed', icon: Cloud },
   { key: 'wilting', label: 'Low', icon: AlertCircle },
 ];

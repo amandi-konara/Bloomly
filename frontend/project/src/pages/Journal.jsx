@@ -5,7 +5,7 @@ import Card from '../components/Card';
 import { dataService } from '../services/dataService';
 
 const MOODS = [
-  { value: 'sunny', label: 'Great' },
+  { value: 'sunny', label: 'Calm' },
   { value: 'blooming', label: 'Good' },
   { value: 'seedling', label: 'Okay' },
   { value: 'wilting', label: 'Low' },
@@ -66,7 +66,7 @@ function getMonthDays(date) {
 }
 
 function getMoodLabel(value) {
-  return MOODS.find((mood) => mood.value === value)?.label || value || 'Okay';
+  return MOODS.find((mood) => mood.value === value)?.label || 'Okay';
 }
 
 function formatDate(value) {

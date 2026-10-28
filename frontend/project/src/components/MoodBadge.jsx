@@ -1,9 +1,21 @@
 import React from 'react';
 import { AlertCircle, Cloud, Meh, Moon, Smile } from 'lucide-react';
 
+export const MOOD_LABELS = {
+  seedling: 'Okay',
+  blooming: 'Good',
+  wilting: 'Low',
+  stormy: 'Stressed',
+  sunny: 'Calm',
+};
+
+export function getMoodLabel(mood) {
+  return MOOD_LABELS[mood] || 'Okay';
+}
+
 export const MOOD_CONFIG = {
   sunny: {
-    label: 'Okay',
+    label: 'Calm',
     icon: Meh,
     color: 'sage',
     badgeClass: 'bg-sage-100 text-sage-800 border-sage-200',
@@ -17,7 +29,7 @@ export const MOOD_CONFIG = {
     description: 'Feeling good today',
   },
   seedling: {
-    label: 'Calm',
+    label: 'Okay',
     icon: Moon,
     color: 'sage',
     badgeClass: 'bg-sage-100 text-sage-800 border-sage-200',

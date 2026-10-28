@@ -38,7 +38,7 @@ export default function AppLayout({ children }) {
   });
   const [isCheckInOpen, setIsCheckInOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [user, setUser] = useState(getStoredUser);
   const navigate = useNavigate();
 
@@ -111,15 +111,27 @@ export default function AppLayout({ children }) {
         id="app-sidebar"
         className={`app-sidebar ${sidebarCollapsed ? 'app-sidebar-collapsed' : ''}`}
       >
-        <Link className="app-brand" to="/dashboard" aria-label="Bloomly dashboard">
-          <span className="app-brand-mark">
-            <img src={bloomlyLogo} alt="" />
-          </span>
-          <span className="app-brand-copy">
-            <span className="app-brand-name">Bloomly</span>
-            <span className="app-brand-caption">Wellness & Habits</span>
-          </span>
-        </Link>
+        <div className="app-sidebar-top">
+          <Link className="app-brand" to="/dashboard" aria-label="Bloomly dashboard">
+            <span className="app-brand-mark">
+              <img src={bloomlyLogo} alt="" />
+            </span>
+            <span className="app-brand-copy">
+              <span className="app-brand-name">Bloomly</span>
+              <span className="app-brand-caption">Personal Wellness and Habit Tracker</span>
+            </span>
+          </Link>
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-expanded={!sidebarCollapsed}
+            aria-controls="app-sidebar"
+            className="app-icon-button app-sidebar-toggle"
+          >
+            <Menu aria-hidden="true" />
+          </button>
+        </div>
 
         <nav className="app-sidebar-nav" aria-label="Main navigation">
           {renderNavItems()}
@@ -132,10 +144,10 @@ export default function AppLayout({ children }) {
             <button
               type="button"
               onClick={toggleSidebar}
-              aria-label={mobileMenuOpen ? 'Close navigation menu' : sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              aria-expanded={mobileMenuOpen || (window.innerWidth >= 1024 && !sidebarCollapsed)}
-              aria-controls={mobileMenuOpen ? 'app-mobile-navigation' : 'app-sidebar'}
-              className="app-icon-button app-sidebar-toggle"
+              aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="app-mobile-navigation"
+              className="app-icon-button app-mobile-sidebar-toggle"
             >
               {mobileMenuOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
             </button>
@@ -146,7 +158,7 @@ export default function AppLayout({ children }) {
               </span>
               <span className="app-brand-copy">
                 <span className="app-brand-name">Bloomly</span>
-                <span className="app-brand-caption">Wellness & Habits</span>
+                <span className="app-brand-caption">Personal Wellness and Habit Tracker</span>
               </span>
             </Link>
 
