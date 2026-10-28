@@ -7,7 +7,14 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 
 const app = express();
-const corsMiddleware = cors();
+const corsMiddleware = cors({
+  origin: [
+    'https://bloomly-frontend.vercel.app',
+    'https://bloomly-delta.vercel.app'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+});
 app.use(corsMiddleware);
 app.use(express.json());
 

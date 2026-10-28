@@ -19,8 +19,8 @@ router.post('/signup', async (req, res) => {
       return res.status(400).json({ error: 'Name must be between 1 and 80 characters.' });
     }
     if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return res.status(400).json({ error: 'Enter a valid email address.' });
-    }
+    return res.status(400).json({ error: 'Enter a valid email address.' });
+  }
     if (typeof password !== 'string' || password.length < 8 || password.length > 72) {
       return res.status(400).json({ error: 'Password must be between 8 and 72 characters.' });
     }
@@ -43,7 +43,8 @@ router.post('/login', async (req, res) => {
     if (!email || typeof password !== 'string' || !password) {
       return res.status(400).json({ error: 'Enter your email and password.' });
     }
-    const user = await User.findOne({ email: enteredEmail }) || await User.findOne({ email });
+    const user = await User.findOne({ email });
+    
     if (!user) return res.status(401).json({ error: 'Invalid credentials' });
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(401).json({ error: 'Invalid credentials' });

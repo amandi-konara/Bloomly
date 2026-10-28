@@ -3,3 +3,4 @@
 frontend/.env
 backend/.env
 frontend/project/.env
+backend/reset-password.js
