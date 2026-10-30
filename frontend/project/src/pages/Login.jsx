@@ -59,8 +59,8 @@ export default function Login() {
             )}
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-bloom-muted mb-1.5">
-                Email Address
+              <label className="block text-xs font-semibold tracking-wider text-bloom-muted mb-1.5">
+                Your Email Address
               </label>
               <input
                 type="email"
@@ -73,7 +73,7 @@ export default function Login() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-bloom-muted mb-1.5">
+              <label className="block text-xs font-semibold tracking-wider text-bloom-muted mb-1.5">
                 Password
               </label>
               <input
