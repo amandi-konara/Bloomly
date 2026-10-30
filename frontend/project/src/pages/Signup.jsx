@@ -62,14 +62,14 @@ export default function Signup() {
             )}
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-bloom-muted mb-1.5">
-                Your Name
+              <label className="block text-xs font-semibold tracking-wider text-bloom-muted mb-1.5">
+                What should we call you?
               </label>
               <input
                 type="text"
                 required
                 maxLength={80}
-                placeholder="e.g. Amandi"
+                placeholder="e.g. John"
                 className="w-full p-3.5 rounded-2xl border border-bloom-border bg-white text-sm text-bloom-dark focus:outline-none focus:ring-2 focus:ring-sage-300"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -77,14 +77,14 @@ export default function Signup() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-bloom-muted mb-1.5">
-                University Email
+              <label className="block text-xs font-semibold tracking-wider text-bloom-muted mb-1.5">
+                Your email address
               </label>
               <input
                 type="email"
                 required
                 maxLength={254}
-                placeholder="you@university.edu"
+                placeholder="you@example.com"
                 className="w-full p-3.5 rounded-2xl border border-bloom-border bg-white text-sm text-bloom-dark focus:outline-none focus:ring-2 focus:ring-sage-300"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -92,15 +92,15 @@ export default function Signup() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-bloom-muted mb-1.5">
-                Password
+              <label className="block text-xs font-semibold tracking-wider text-bloom-muted mb-1.5">
+                Create a password
               </label>
               <input
                 type="password"
                 required
                 minLength={8}
                 maxLength={72}
-                placeholder="Create a secure password"
+                placeholder="Choose a secure password"
                 className="w-full p-3.5 rounded-2xl border border-bloom-border bg-white text-sm text-bloom-dark focus:outline-none focus:ring-2 focus:ring-sage-300"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
