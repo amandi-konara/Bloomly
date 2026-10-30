@@ -1,65 +1,115 @@
-# Bloomly
+### Bloomly - Personal Wellness and Habit Tracker
 
-A personal wellness journal and habit tracker with a responsive dashboard, journal, and progress views.
+Bloomly is a personal wellness and habit-tracking web application. It helps users build healthy routines, record daily moods, write journal entries and review their progress in one place.
 
-## Data and privacy
+The application brings together habit management, daily check-ins, a wellness journal and progress summaries through a clean interface with soft colours and simple navigation.
 
-- Journal records are stored in MongoDB and every journal API request requires a valid JWT. Reads, updates, and deletes are scoped to the authenticated account.
-- Habits, habit completion dates, and personal goals are stored in browser local storage, partitioned by the signed-in account ID. They are not synchronized to the backend or protected from someone with access to the same browser profile.
-- Previously unscoped browser records are left untouched and are not automatically assigned to an account; migrating them requires confirming their owner.
-- The application does not send journal data to an AI provider. Reminder times are saved preferences only; the application does not deliver notifications.
+### Features
 
-## Technologies used
+Dashboard
+- View a personalised welcome message.
+- See today's habit overview.
+- Open the daily mood and energy check-in.
+- View the daily habit checklist.
 
-| Layer | Technology |
-|---|---|
-| Frontend | React (Vite), Tailwind CSS, React Router, Recharts, Axios |
-| Backend | Node.js, Express, deployed as Vercel serverless functions |
-| Database | MongoDB Atlas (Mongoose ODM) |
-| Auth | JWT (jsonwebtoken), bcrypt for password hashing |
-| Hosting | Vercel (frontend + backend) |
+My Habits
+- Create habits and give each habit a name.
+- Organise habits into categories such as Mindfulness, Hydration, Movement, Rest, Nutrition, Focus and Other.
+- Choose a habit frequency.
+- Save an optional preferred reminder time.
+- View and manage active and archived habits.
 
-## Architecture
+Journal
+- Browse journal information by date using the calendar.
+- Record a mood and energy level.
+- Add personal notes and select wellness activities.
+- Review journal entries in the entries list.
+- Edit or delete entries where these actions are available.
+- View weekly insights, including mood check-ins, average energy and mood distribution.
 
+Progress
+- View habit completion for the current and previous six days.
+- Review individual habit history.
+- Review mood and energy check-ins.
+- View personal goals.
+
+Settings
+- View and update profile details.
+- Save a preferred check-in time.
+- Switch between light and dark appearance using the theme control.
+- Log out of the application.
+
+Note: The settings and habit form indicate that a preferred reminder time can be saved, but Bloomly does not currently send reminder or notification messages.
+
+### Technologies
+
+Update this list to match the technologies and libraries used in the final source code.
+
+- Frontend: React
+- Language: JavaScript
+- Backend: Node.js and Express
+- Database: MongoDB
+- Development tools: Visual Studio Code, Git and GitHub
+
+
+### Getting Started
+
+1. Clone the repository
+
+```bash
+git clone YOUR_GITHUB_REPOSITORY_URL
+cd Bloomly
 ```
-React frontend (Vercel)
-        │  REST calls
-        ▼
-Express API (Vercel serverless functions)
-        │                              │
-        ▼                              ▼
-MongoDB Atlas
-(users, journal logs)
 
-  [JWT auth scopes account and journal endpoints]
+2. Install dependencies
+
+Install the frontend dependencies in the frontend folder:
+
+```bash
+cd frontend
+npm install
 ```
 
-## Key features
+Install the backend dependencies in a separate terminal:
 
-- **Signup/login** with password hashing and JWT-based session handling
-- **Journal** — mood, energy, optional reflection, and self-care activities
-- **Habits and progress** — account-partitioned local habit schedules and completion history
-- **Responsive interface** with Dashboard, My Habits, Journal, Progress, and Settings destinations
-
-## Live deployment
-
-- Frontend: https://bloomly-frontend.vercel.app
-- Backend API: https://bloomly-delta.vercel.app
-
-## Running locally
-
-**Backend:**
 ```bash
 cd backend
 npm install
-# create .env with MONGO_URI, JWT_SECRET, PORT
-node server.js
 ```
 
-**Frontend:**
+3. Configure environment variables
+
+Create a `.env` file in the backend folder using the variable names expected by your application.
+
+Example only:
+
+```env
+PORT=5000
+MONGO_URI=your_mongodb_connection_string
+```
+
+Add any other variables required by your project. Do not commit `.env` files, database passwords or secret keys to GitHub.
+
+4. Start the application
+
+Run the backend using the start script defined in its `package.json`. For example:
+
 ```bash
-cd frontend/project
-npm install
-# create .env with VITE_API_URL=http://localhost:5000/api
+npm start
+```
+
+Run the frontend in a separate terminal using its configured development script. For example:
+
+```bash
 npm run dev
 ```
+
+Use the actual scripts listed in each `package.json`.
+
+### Project Links
+
+- Live application: https://bloomly-delta.vercel.app
+
+---
+
+*Bloomly – Small steps towards a healthier everyday routine.*
