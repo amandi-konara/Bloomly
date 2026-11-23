@@ -117,7 +117,7 @@ npm run dev            # opens on http://localhost:5173
 - A preferred reminder time can be saved, but Bloomly doesn't send notifications yet.
 - No automated tests yet.
 
-## 🗺 Roadmap
+## 🔮 Future Improvements
 
 - [ ] Move habits and goals to the backend (MongoDB) so they sync across devices
 - [ ] Add API tests (Jest + Supertest) and a GitHub Actions CI workflow
