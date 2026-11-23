@@ -1,6 +1,15 @@
+# Dependencies
+node_modules/
 
+# Environment files
 .env
-frontend/.env
-backend/.env
-frontend/project/.env
-backend/reset-password.js
+.env.*
+!.env.example
+
+# Build output
+dist/
+
+# OS / editor
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
