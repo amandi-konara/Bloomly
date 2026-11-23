@@ -4,7 +4,16 @@ Bloomly is a full-stack web app for building healthy routines. Users log their d
 
 **🔗 Live demo:** https://bloomly-delta.vercel.app
 
-<!-- Add 2–3 screenshots here, e.g. ![Dashboard](docs/screenshots/dashboard.png) -->
+<p align="center">
+  <img src="docs/screenshots/dashboard.png" width="49%" alt="Bloomly dashboard in light mode">
+  <img src="docs/screenshots/dashboard-dark.png" width="49%" alt="Bloomly dashboard in dark mode">
+</p>
+<p align="center"><em>Dashboard: light and dark mode</em></p>
+
+<p align="center">
+  <img src="docs/screenshots/wellness-journal.png" width="80%" alt="Wellness journal calendar with colour-coded mood entries">
+</p>
+<p align="center"><em>Wellness journal: calendar with colour-coded daily moods</em></p>
 
 ---
 
@@ -108,7 +117,7 @@ npm run dev            # opens on http://localhost:5173
 - A preferred reminder time can be saved, but Bloomly doesn't send notifications yet.
 - No automated tests yet.
 
-## 🗺 Roadmap
+## 🔮 Future Improvements
 
 - [ ] Move habits and goals to the backend (MongoDB) so they sync across devices
 - [ ] Add API tests (Jest + Supertest) and a GitHub Actions CI workflow
